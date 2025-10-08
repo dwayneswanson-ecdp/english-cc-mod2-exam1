@@ -310,22 +310,82 @@ function enableFullScreen() {
       <b>Class Code:</b> MDO2G3<br>
       <b>Time Taken:</b> ${minutesUsed} min</p>
       <hr>
-      <h3>Part A – Vocabulary Matching (Auto-graded)</h3>
-      <ol style="padding-left:20px; line-height:1.6;">
-        ${answers.map(a => `<li style="margin-bottom:6px; color:${a.correct ? 'green' : '#b00'};">${a.text}</li>`).join("")}
-      </ol>
-      <p><b>Part A Score:</b> ${score}/10</p>
+       <h3>Part A – Vocabulary Matching</h3>
+  <table style="border-collapse:collapse;width:100%;margin-top:10px;">
+    <thead>
+      <tr style="background-color:#004080;color:#fff;text-align:left;">
+        <th style="padding:6px;border:1px solid #ccc;">#</th>
+        <th style="padding:6px;border:1px solid #ccc;">Vocabulary Word</th>
+        <th style="padding:6px;border:1px solid #ccc;">Student’s Answer</th>
+        <th style="padding:6px;border:1px solid #ccc;">Result</th>
+        <th style="padding:6px;border:1px solid #ccc;">Correct Answer</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${Object.keys(correctAnswers).map((key, index) => {
+        const qNum = index + 1;
+        const word = Object.keys(correctAnswers)[index];
+        const vocab = [
+          "Budget","Forecast","KPI","Supplier","Lead Time",
+          "Inventory","Overhead","Sustainability","ROI","Headcount"
+        ][index];
+        const sel = fd.get("q" + qNum) || "No answer";
+        const corr = correctAnswers[key];
+        const isCorrect = sel === corr;
+        const mark = isCorrect ? "✅ Correct" : "❌ Incorrect";
+        const correctText = isCorrect ? "—" : corr;
+        return `
+          <tr>
+            <td style="padding:6px;border:1px solid #ccc;">${qNum}</td>
+            <td style="padding:6px;border:1px solid #ccc;"><b>${vocab}</b></td>
+            <td style="padding:6px;border:1px solid #ccc;">${sel}</td>
+            <td style="padding:6px;border:1px solid #ccc;color:${isCorrect ? 'green' : '#b00'};">${mark}</td>
+            <td style="padding:6px;border:1px solid #ccc;">${correctText}</td>
+          </tr>
+        `;
+      }).join("")}
+    </tbody>
+  </table>
+  <p><b>Part A Score:</b> ${score}/10</p>
       <hr>
       <h3>Part B – Email Writing</h3>
       <p>${fd.get("emailBody").replace(/\n/g, "<br>")}</p>
       <hr>
       <h3>Instructor Feedback & Evaluation</h3>
-      <ul>
-        <li><b>1. Vocabulary Use (/3)</b></li>
-        <li><b>2. Structure & Clarity (/3)</b></li>
-        <li><b>3. Language Accuracy & Tone (/2)</b></li>
-        <li><b>4. Professional Style (/2)</b></li>
-      </ul>
+<table style="border-collapse:collapse;width:100%;margin-top:10px;">
+  <thead>
+    <tr style="background-color:#004080;color:#fff;text-align:left;">
+      <th style="padding:6px;border:1px solid #ccc;">Criterion</th>
+      <th style="padding:6px;border:1px solid #ccc;">Maximum Score</th>
+      <th style="padding:6px;border:1px solid #ccc;">Instructor Comments</th>
+      <th style="padding:6px;border:1px solid #ccc;">Score Awarded</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:6px;border:1px solid #ccc;">Vocabulary Use</td>
+      <td style="padding:6px;border:1px solid #ccc;">/3</td>
+      <td style="padding:6px;border:1px solid #ccc;" rowspan="4" valign="top">Your writing is terrible, sweetie !</td>
+      <td style="padding:6px;border:1px solid #ccc;">1 / 3</td>
+    </tr>
+    <tr>
+      <td style="padding:6px;border:1px solid #ccc;">Structure & Clarity</td>
+      <td style="padding:6px;border:1px solid #ccc;">/3</td>
+      <td style="padding:6px;border:1px solid #ccc;">1 / 3</td>
+    </tr>
+    <tr>
+      <td style="padding:6px;border:1px solid #ccc;">Language Accuracy & Tone</td>
+      <td style="padding:6px;border:1px solid #ccc;">/2</td>
+      <td style="padding:6px;border:1px solid #ccc;">1 / 2</td>
+    </tr>
+    <tr>
+      <td style="padding:6px;border:1px solid #ccc;">Professional Style</td>
+      <td style="padding:6px;border:1px solid #ccc;">/2</td>
+      <td style="padding:6px;border:1px solid #ccc;">1 / 2</td>
+    </tr>
+  </tbody>
+</table>
+
       <p><b>Instructor Comments:</b><br>[Type feedback here]</p>
       <p><b>Part B Score:</b> ___ /10<br>
       <b>Final Note (Part A + Part B):</b> ___ /20</p>
@@ -337,7 +397,7 @@ function enableFullScreen() {
     emailjs.send("service_opm4h6b", "template_r0u784p", {
       from_name: name,
       from_email: email,
-      subject: `English Exam – Business Resources – ${name} (MDO2G3)`,
+      subject: `${name} – English Exam – Business Resources (MDO2G3)`,
       message_html: htmlReport
     })
     .then(() => {
