@@ -1,190 +1,244 @@
-<!-- index.html  (template) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>English CC Exam – Business Resources</title>
+<title>English Exam – Business Resources</title>
 <style>
-  body {font-family:Arial, sans-serif; margin:0; padding:0; background:#f9f9f9;}
-  header {background:#004080; color:#fff; padding:10px 20px;}
-  main {max-width:800px; margin:20px auto; background:#fff; padding:20px; border-radius:10px;}
-  h1,h2 {color:#004080;}
-  .hidden {display:none;}
-  select, textarea, input {width:100%; margin:5px 0; padding:8px;}
-  #timer {font-weight:bold; color:#004080; text-align:right;}
-  .warning {color:#cc0000;}
+ body{font-family:Arial,Helvetica,sans-serif;background:#f8f9fb;margin:0;color:#222;font-size:16px;line-height:1.6;}
+ header{background:#004080;color:#fff;padding:20px;text-align:center;position:relative;z-index:5;}
+ main{max-width:860px;margin:30px auto;background:#fff;padding:40px;border-radius:12px;box-shadow:0 0 8px rgba(0,0,0,0.1);}
+ h1,h2{color:#004080;margin-top:0;}
+ section{margin-bottom:40px;border-bottom:1px solid #ddd;padding-bottom:30px;}
+ select,textarea,input{width:100%;padding:10px;margin-top:6px;margin-bottom:14px;border:1px solid #ccc;border-radius:6px;}
+ button{background:#004080;color:#fff;border:none;padding:12px 28px;border-radius:6px;cursor:pointer;font-size:16px;}
+ button:hover{background:#003366;}
+ #timer{text-align:right;font-weight:bold;color:#004080;}
+ ol li{margin-bottom:16px;}
 </style>
+
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  emailjs.init("Bb0oPYBiZGQcyIz5r"); 
-  let timeLeft = 40 * 60;
-  let timerInt, leftOnce = false;
+document.addEventListener("DOMContentLoaded",()=>{
+ emailjs.init("Bb0oPYBiZGQcyIz5r"); 
+ const login=document.getElementById("login");
+ const exam=document.getElementById("exam");
+ const timerDisplay=document.getElementById("timer");
+ const form=document.getElementById("examForm");
+ let timeLeft=40*60,timerInt,leftOnce=false;
 
-  const form = document.getElementById("examForm");
-  const login = document.getElementById("login");
-  const exam = document.getElementById("exam");
-  const testMode = document.getElementById("testMode");
-  const timerDisplay = document.getElementById("timer");
+ const correctAnswers={
+  q1:"A plan for how money will be spent during a specific period.",
+  q2:"A prediction of future sales, costs, or results.",
+  q3:"A measurable value showing how effectively goals are achieved.",
+  q4:"A company providing goods or services to another.",
+  q5:"The time between ordering and receiving something.",
+  q6:"The goods and materials a company holds.",
+  q7:"Ongoing expenses not tied to one product or service.",
+  q8:"Managing resources for long-term balance.",
+  q9:"Financial gain or loss compared to cost of investment.",
+  q10:"Number of employees in a company or department."
+ };
 
-  function startTimer(){
-    timerInt = setInterval(()=>{
-      timeLeft--;
-      const min = Math.floor(timeLeft/60), sec = timeLeft%60;
-      timerDisplay.textContent = `Time Remaining: ${min}:${sec.toString().padStart(2,"0")}`;
-      if(timeLeft<=0){clearInterval(timerInt); submitExam();}
-    },1000);
-  }
+ // randomize dropdowns but keep first ("-- Choose --") fixed
+ document.querySelectorAll("select").forEach(sel=>{
+   const first=sel.options[0];
+   const rest=Array.from(sel.options).slice(1);
+   for(let i=rest.length-1;i>0;i--){
+     const j=Math.floor(Math.random()*(i+1));
+     [rest[i].text,rest[j].text]=[rest[j].text,rest[i].text];
+   }
+   sel.innerHTML="";
+   sel.appendChild(first);
+   rest.forEach(o=>sel.appendChild(o));
+ });
 
-  function enableFullScreen(){
-    if(testMode.checked) return;
-    document.documentElement.requestFullscreen();
-    document.addEventListener("fullscreenchange", ()=>{
-      if(!document.fullscreenElement){
-        if(leftOnce){submitExam();}
-        else {alert("Warning: Leaving full screen again will submit your exam."); leftOnce=true;}
-      }
-    });
-  }
+ function startTimer(){
+   timerInt=setInterval(()=>{
+     timeLeft--;
+     const m=Math.floor(timeLeft/60),s=timeLeft%60;
+     timerDisplay.textContent=`Time Remaining: ${m}:${s.toString().padStart(2,"0")}`;
+     if(timeLeft<=0){clearInterval(timerInt);submitExam();}
+   },1000);
+ }
 
-  document.getElementById("startBtn").onclick=()=>{
-    const code=document.getElementById("classCode").value.trim();
-    if(code!=="MDO2G3"){alert("Invalid class code"); return;}
-    login.classList.add("hidden"); exam.classList.remove("hidden");
-    if(!testMode.checked){enableFullScreen(); startTimer();}
-  }
+ function enableFullScreen(){
+   document.documentElement.requestFullscreen();
+   document.addEventListener("fullscreenchange",()=>{
+     if(!document.fullscreenElement){
+       if(leftOnce){submitExam();}
+       else{alert("Warning: leaving full screen again will submit your exam.");leftOnce=true;}
+     }
+   });
+ }
 
-  function submitExam(){
-    clearInterval(timerInt);
-    const formData=new FormData(form);
-    const answers=[];
-    for(let i=1;i<=10;i++){
-      answers.push(`${i}. ${formData.get("q"+i)}`);
-    }
-    const templateParams={
-      from_name: formData.get("studentName"),
-      from_email: formData.get("studentEmail"),
-      class_code: "MDO2G3",
-      answers: answers.join("<br>"),
-      email_body: formData.get("emailBody"),
-      subject:`CC Exam Submission – ${formData.get("studentName")} (MDO2G3)`
-    };
-    emailjs.send("service_opm4h6b","template_r0u784p",templateParams)
-      .then(()=>alert("✅ Your exam has been submitted."), err=>alert("Error: "+err.text));
-    exam.classList.add("hidden");
-  }
+ document.getElementById("startBtn").onclick=()=>{
+   const code=document.getElementById("classCode").value.trim();
+   if(code!=="MDO2G3"){alert("Invalid class code.");return;}
+   login.style.display="none";
+   exam.style.display="block";
+   enableFullScreen();startTimer();
+ };
 
-  form.addEventListener("submit", e=>{e.preventDefault(); submitExam();});
+ function submitExam(){
+   clearInterval(timerInt);
+   const fd=new FormData(form);
+   const name=fd.get("studentName"),email=fd.get("studentEmail");
+   const minutesUsed=40-Math.floor(timeLeft/60);
+   const answers=[];let score=0;
+   for(let i=1;i<=10;i++){
+     const sel=fd.get("q"+i)||"No answer";
+     const corr=correctAnswers["q"+i];
+     if(sel===corr)score++;
+     const mark=(sel===corr)?"✅ Correct":`❌ Incorrect → Correct answer: "${corr}"`;
+     answers.push(`${i}. ${sel} ${mark}`);
+   }
+
+   const htmlReport=`
+   <h2>English Exam – Business Resources</h2>
+   <p><b>Student Name:</b> ${name}<br>
+   <b>Student Email:</b> ${email}<br>
+   <b>Class Code:</b> MDO2G3<br>
+   <b>Time Taken:</b> ${minutesUsed} min</p>
+   <hr>
+   <h3>Part A – Vocabulary Matching (Auto-graded)</h3>
+   ${answers.join("<br>")}
+   <p><b>Part A Score:</b> ${score}/10</p>
+   <hr>
+   <h3>Part B – Email Writing</h3>
+   <p>${fd.get("emailBody").replace(/\n/g,"<br>")}</p>
+   <hr>
+   <h3>Instructor Feedback & Evaluation</h3>
+   <ul>
+     <li><b>1. Vocabulary Use (/3)</b> – Uses at least 3 words from the list correctly.</li>
+     <li><b>2. Structure & Clarity (/3)</b> – Logical flow (intro → problem → solution → closing).</li>
+     <li><b>3. Language Accuracy & Tone (/2)</b> – Grammar and tone professional.</li>
+     <li><b>4. Professional Style (/2)</b> – Appropriate greeting/closing.</li>
+   </ul>
+   <p><b>Instructor Comments:</b><br>[Type feedback here]</p>
+   <p><b>Part B Score:</b> ___ /10<br><b>Final Note (Part A + Part B):</b> ___ /20</p>`;
+
+   const params={
+     from_name:name,
+     from_email:email,
+     class_code:"MDO2G3",
+     subject:`English Exam – Business Resources – ${name} (MDO2G3)`,
+     message:htmlReport
+   };
+
+   emailjs.send("service_opm4h6b","template_r0u784p",params)
+     .then(()=>alert("✅ Exam submitted. You may close this window."),
+           err=>alert("Error sending: "+err.text));
+   exam.style.display="none";
+ }
+
+ form.addEventListener("submit",e=>{e.preventDefault();submitExam();});
 });
 </script>
 </head>
+
 <body>
 <header>
-  <h1>English CC Exam – Business Resources</h1>
-  <div id="timer"></div>
+ <h1>English Exam – Business Resources (MDO2G3)</h1>
+ <div id="timer"></div>
 </header>
 
 <main>
-  <label><input type="checkbox" id="testMode"> 🧑‍🏫 Instructor Test Mode (no timer / no full-screen)</label>
+<section id="login">
+ <h2>Start Exam</h2>
+ <p>Enter your details to begin. Once started, you will have <b>40 minutes</b>.</p>
+ <label>Name:<input type="text" id="studentName" required></label>
+ <label>Email:<input type="email" id="studentEmail" required></label>
+ <label>Class Code:<input type="text" id="classCode" required></label>
+ <button id="startBtn">Start Exam</button>
+</section>
 
-  <section id="login">
-    <h2>Login</h2>
-    <p>Please enter your details to begin.</p>
-    <label>Name:<input type="text" id="studentName" required></label>
-    <label>Email:<input type="email" id="studentEmail" required></label>
-    <label>Class Code:<input type="text" id="classCode" required></label>
-    <button id="startBtn">Start Exam</button>
-  </section>
+<section id="exam" style="display:none;">
+<form id="examForm">
+ <h2>Part A – Vocabulary Matching</h2>
+ <ol>
+   <li>Budget<select name="q1">
+     <option value="">-- Choose --</option>
+     <option>A plan for how money will be spent during a specific period.</option>
+     <option>The time between ordering and receiving something.</option>
+     <option>The goods and materials a company holds.</option>
+     <option>A company providing goods or services to another.</option>
+   </select></li>
+   <li>Forecast<select name="q2">
+     <option value="">-- Choose --</option>
+     <option>A prediction of future sales, costs, or results.</option>
+     <option>Ongoing expenses not tied to one product or service.</option>
+     <option>Financial gain or loss compared to cost.</option>
+     <option>Number of employees in a department.</option>
+   </select></li>
+   <li>KPI<select name="q3">
+     <option value="">-- Choose --</option>
+     <option>A measurable value showing how effectively goals are achieved.</option>
+     <option>A plan for money spending.</option>
+     <option>The time between order and delivery.</option>
+     <option>A prediction of sales.</option>
+   </select></li>
+   <li>Supplier<select name="q4">
+     <option value="">-- Choose --</option>
+     <option>A company providing goods or services to another.</option>
+     <option>Expenses not linked to a product.</option>
+     <option>The financial return on investment.</option>
+     <option>A staff member giving feedback.</option>
+   </select></li>
+   <li>Lead Time<select name="q5">
+     <option value="">-- Choose --</option>
+     <option>The time between ordering and receiving something.</option>
+     <option>Extra costs of running a business.</option>
+     <option>Number of employees.</option>
+     <option>A business sustainability report.</option>
+   </select></li>
+   <li>Inventory<select name="q6">
+     <option value="">-- Choose --</option>
+     <option>The goods and materials a company holds.</option>
+     <option>The expected revenue.</option>
+     <option>The time between orders.</option>
+     <option>Company overhead costs.</option>
+   </select></li>
+   <li>Overhead<select name="q7">
+     <option value="">-- Choose --</option>
+     <option>Ongoing expenses not tied to one product or service.</option>
+     <option>A plan for company goals.</option>
+     <option>The delivery delay period.</option>
+     <option>The total sales revenue.</option>
+   </select></li>
+   <li>Sustainability<select name="q8">
+     <option value="">-- Choose --</option>
+     <option>Managing resources for long-term balance.</option>
+     <option>The company’s annual sales.</option>
+     <option>A measurable performance indicator.</option>
+     <option>Stock of materials.</option>
+   </select></li>
+   <li>ROI<select name="q9">
+     <option value="">-- Choose --</option>
+     <option>Financial gain or loss compared to cost of investment.</option>
+     <option>Total operating expenses.</option>
+     <option>Employee satisfaction level.</option>
+     <option>Plan for spending.</option>
+   </select></li>
+   <li>Headcount<select name="q10">
+     <option value="">-- Choose --</option>
+     <option>Number of employees in a company or department.</option>
+     <option>Amount of raw materials held.</option>
+     <option>Prediction of future costs.</option>
+     <option>Profit after expenses.</option>
+   </select></li>
+ </ol>
 
-  <section id="exam" class="hidden">
-    <form id="examForm">
-      <h2>Part A – Vocabulary Matching</h2>
-      <p>Select the correct definition for each term.</p>
-      <ol>
-        <li>Budget <select name="q1">
-          <option value="">--Choose--</option>
-          <option>A plan for how money will be spent during a specific period.</option>
-          <option>The total number of employees in a company.</option>
-          <option>Regular costs that vary with production.</option>
-          <option>A financial gain compared to cost.</option>
-        </select></li>
-        <li>Forecast <select name="q2">
-          <option value="">--Choose--</option>
-          <option>A prediction of future sales, costs, or results.</option>
-          <option>A company providing goods or services.</option>
-          <option>Ongoing business expenses.</option>
-          <option>The process of hiring staff.</option>
-        </select></li>
-        <li>KPI <select name="q3">
-          <option value="">--Choose--</option>
-          <option>A measurable value showing how effectively goals are achieved.</option>
-          <option>A plan for money spending.</option>
-          <option>The time between order and delivery.</option>
-          <option>A prediction of sales.</option>
-        </select></li>
-        <li>Supplier <select name="q4">
-          <option value="">--Choose--</option>
-          <option>A company providing goods or services to another.</option>
-          <option>Expenses not linked to a product.</option>
-          <option>The financial return on investment.</option>
-          <option>A staff member giving feedback.</option>
-        </select></li>
-        <li>Lead Time <select name="q5">
-          <option value="">--Choose--</option>
-          <option>The time between ordering and receiving something.</option>
-          <option>Extra costs of running a business.</option>
-          <option>Number of employees.</option>
-          <option>A business sustainability report.</option>
-        </select></li>
-        <li>Inventory <select name="q6">
-          <option value="">--Choose--</option>
-          <option>The goods and materials a company holds.</option>
-          <option>The expected revenue.</option>
-          <option>The time between orders.</option>
-          <option>Company overhead costs.</option>
-        </select></li>
-        <li>Overhead <select name="q7">
-          <option value="">--Choose--</option>
-          <option>Ongoing expenses not tied to one product or service.</option>
-          <option>A plan for company goals.</option>
-          <option>The delivery delay period.</option>
-          <option>The total sales revenue.</option>
-        </select></li>
-        <li>Sustainability <select name="q8">
-          <option value="">--Choose--</option>
-          <option>Managing resources for long-term balance.</option>
-          <option>The company’s annual sales.</option>
-          <option>A measurable performance indicator.</option>
-          <option>Stock of materials.</option>
-        </select></li>
-        <li>ROI <select name="q9">
-          <option value="">--Choose--</option>
-          <option>Financial gain or loss compared to cost of investment.</option>
-          <option>Total operating expenses.</option>
-          <option>Employee satisfaction level.</option>
-          <option>Plan for spending.</option>
-        </select></li>
-        <li>Headcount <select name="q10">
-          <option value="">--Choose--</option>
-          <option>Number of employees in a company or department.</option>
-          <option>Amount of raw materials held.</option>
-          <option>Prediction of future costs.</option>
-          <option>Profit after expenses.</option>
-        </select></li>
-      </ol>
-
-      <h2>Part B – Email Writing Task</h2>
-      <p>You are a team leader and one of your suppliers has delayed an important delivery.<br>
-         Write a short professional email to your manager:<br>
-         – Explain the situation briefly<br>
-         – Propose a solution or next step<br>
-         – Use a polite and professional tone.</p>
-      <textarea name="emailBody" rows="10" required></textarea>
-
-      <button type="submit">Submit Exam</button>
-    </form>
-  </section>
+ <h2>Part B – Email Writing Task</h2>
+ <p>You are a team leader and one of your suppliers has delayed an important delivery.<br>
+ Write a short professional email to your manager:<br>
+ – Explain the situation briefly<br>
+ – Propose a solution or next step<br>
+ – Use a polite and professional tone.</p>
+ <textarea name="emailBody" rows="10" required></textarea>
+ <button type="submit">Submit Exam</button>
+</form>
+</section>
 </main>
 </body>
 </html>
