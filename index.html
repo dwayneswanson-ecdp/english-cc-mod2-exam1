@@ -117,6 +117,40 @@
 document.addEventListener("DOMContentLoaded", () => {
   emailjs.init("Bb0oPYBiZGQcyIz5r");
 
+  // --- MOBILE EXAM LOCK MODE ---
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+  navigator.userAgent
+);
+
+if (isMobile) {
+  console.log("Mobile Exam Lock Mode enabled");
+
+  // Warn if switching away from the page (e.g., app switch, minimize)
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      alert("⚠️ You left the exam window. Your answers have been erased.");
+      localStorage.clear();
+      location.reload(); // restart exam
+    }
+  });
+
+  // Disable long-press, copy, paste, and context menu
+  document.addEventListener("copy", e => e.preventDefault());
+  document.addEventListener("cut", e => e.preventDefault());
+  document.addEventListener("paste", e => e.preventDefault());
+  document.addEventListener("contextmenu", e => e.preventDefault());
+  document.addEventListener("selectstart", e => e.preventDefault());
+  document.addEventListener("touchstart", e => {
+    if (e.touches.length > 1) e.preventDefault(); // Blocks 2-finger menus
+  });
+
+  // Warn if switching apps (window blur event)
+  window.addEventListener("blur", () => {
+    alert("⚠️ Switching apps will reset your exam for security reasons.");
+    localStorage.clear();
+    location.reload();
+  });
+}
   const login = document.getElementById("login");
   const exam = document.getElementById("exam");
   const timerDisplay = document.getElementById("timer");
