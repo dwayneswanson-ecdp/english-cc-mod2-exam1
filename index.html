@@ -183,6 +183,11 @@ document.addEventListener("DOMContentLoaded", () => {
     startTimer();
   };
 
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    submitExam();
+  });
+
   function submitExam() {
     clearInterval(timerInt);
 
@@ -231,35 +236,22 @@ document.addEventListener("DOMContentLoaded", () => {
         <em>This report was generated automatically for the English Exam – Business Resources.</em>
       </div>`;
 
-    const params = {
+    // Send email (HTML body)
+    emailjs.send("service_opm4h6b", "template_r0u784p", {
       from_name: name,
       from_email: email,
-      class_code: "MDO2G3",
-      time_taken: `${minutesUsed} min`,
-      answers: answers.join("<br>"),
-      scoreA: score,
-      email_body: fd.get("emailBody").replace(/\n/g, "<br>"),
       subject: `English Exam – Business Resources – ${name} (MDO2G3)`,
       message_html: htmlReport
-    };
-
-  // Send email (HTML body)
-emailjs.send("service_opm4h6b", "template_r0u784p", {
-  from_name: name,
-  from_email: email,
-  subject: `English Exam – Business Resources – ${name} (MDO2G3)`,
-  message_html: htmlReport
-})
-.then(() => {
-  alert("✅ Exam submitted successfully. You may close this window.");
-  document.getElementById("exam").style.display = "none";
-})
-.catch((err) => {
-  alert("❌ Error sending exam: " + err.text);
-  console.error("EmailJS Error:", err);
-});
-
-  form.addEventListener("submit", e => { e.preventDefault(); submitExam(); });
+    })
+    .then(() => {
+      alert("✅ Exam submitted successfully. You may close this window.");
+      document.getElementById("exam").style.display = "none";
+    })
+    .catch((err) => {
+      alert("❌ Error sending exam: " + err.text);
+      console.error("EmailJS Error:", err);
+    });
+  }
 });
 </script>
 </head>
