@@ -243,16 +243,21 @@ document.addEventListener("DOMContentLoaded", () => {
       message_html: htmlReport
     };
 
-    emailjs.send("service_opm4h6b", "template_r0u784p", params)
-      .then(() => {
-        alert("✅ Exam submitted successfully. You may close this window.");
-        document.getElementById("exam").style.display = "none";
-      })
-      .catch((err) => {
-        alert("❌ Error sending exam: " + err.text);
-        console.error("EmailJS Error:", err);
-      });
-  }
+  // Send email (HTML body)
+emailjs.send("service_opm4h6b", "template_r0u784p", {
+  from_name: name,
+  from_email: email,
+  subject: `English Exam – Business Resources – ${name} (MDO2G3)`,
+  message_html: htmlReport
+})
+.then(() => {
+  alert("✅ Exam submitted successfully. You may close this window.");
+  document.getElementById("exam").style.display = "none";
+})
+.catch((err) => {
+  alert("❌ Error sending exam: " + err.text);
+  console.error("EmailJS Error:", err);
+});
 
   form.addEventListener("submit", e => { e.preventDefault(); submitExam(); });
 });
