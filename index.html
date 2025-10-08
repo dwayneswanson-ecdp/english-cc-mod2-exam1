@@ -94,29 +94,52 @@ document.addEventListener("DOMContentLoaded",()=>{
      answers.push(`${i}. ${sel} ${mark}`);
    }
 
-   const htmlReport=`
-   <h2>English Exam – Business Resources</h2>
-   <p><b>Student Name:</b> ${name}<br>
-   <b>Student Email:</b> ${email}<br>
-   <b>Class Code:</b> MDO2G3<br>
-   <b>Time Taken:</b> ${minutesUsed} min</p>
-   <hr>
-   <h3>Part A – Vocabulary Matching (Auto-graded)</h3>
-   ${answers.join("<br>")}
-   <p><b>Part A Score:</b> ${score}/10</p>
-   <hr>
-   <h3>Part B – Email Writing</h3>
-   <p>${fd.get("emailBody").replace(/\n/g,"<br>")}</p>
-   <hr>
-   <h3>Instructor Feedback & Evaluation</h3>
-   <ul>
-     <li><b>1. Vocabulary Use (/3)</b> – Uses at least 3 words from the list correctly.</li>
-     <li><b>2. Structure & Clarity (/3)</b> – Logical flow (intro → problem → solution → closing).</li>
-     <li><b>3. Language Accuracy & Tone (/2)</b> – Grammar and tone professional.</li>
-     <li><b>4. Professional Style (/2)</b> – Appropriate greeting/closing.</li>
-   </ul>
-   <p><b>Instructor Comments:</b><br>[Type feedback here]</p>
-   <p><b>Part B Score:</b> ___ /10<br><b>Final Note (Part A + Part B):</b> ___ /20</p>`;
+  const htmlReport = `
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; background:#ffffff; color:#222; font-size:15px; line-height:1.6; }
+    h2 { color:#004080; margin-bottom:5px; }
+    h3 { color:#004080; margin-top:30px; margin-bottom:10px; }
+    hr { border:none; border-top:1px solid #ccc; margin:20px 0; }
+    b { color:#000; }
+    .score { font-weight:bold; color:#004080; }
+    .feedback { border-top:1px solid #ccc; margin-top:20px; padding-top:10px; font-size:14px; }
+    .footer { border-top:1px solid #ccc; margin-top:20px; padding-top:8px; font-size:12px; color:#555; }
+    .correct { color:green; font-weight:bold; }
+    .incorrect { color:#b00; font-weight:bold; }
+  </style>
+
+  <h2>English Exam – Business Resources – ${name} (MDO2G3)</h2>
+  <p><b>Student Name:</b> ${name}<br>
+  <b>Student Email:</b> ${email}<br>
+  <b>Class Code:</b> MDO2G3<br>
+  <b>Time Taken:</b> ${minutesUsed} min</p>
+  <hr>
+  <h3>Part A – Vocabulary Matching (Auto-graded)</h3>
+  <p>${answers
+    .map(a =>
+      a.includes("✅") ? `<span class="correct">${a}</span>` : `<span class="incorrect">${a}</span>`
+    )
+    .join("<br>")}</p>
+  <p class="score">Part A Score: ${score}/10</p>
+  <hr>
+  <h3>Part B – Email Writing</h3>
+  <p>${fd.get("emailBody").replace(/\n/g, "<br>")}</p>
+  <hr>
+  <h3>Instructor Feedback & Evaluation</h3>
+  <ul>
+    <li><b>1. Vocabulary Use (/3)</b> – Uses at least 3 words from the vocabulary list correctly.</li>
+    <li><b>2. Structure & Clarity (/3)</b> – Logical flow (introduction → problem → solution → closing).</li>
+    <li><b>3. Language Accuracy & Tone (/2)</b> – Grammar and tone are professional.</li>
+    <li><b>4. Professional Style (/2)</b> – Appropriate greeting and closing.</li>
+  </ul>
+  <div class="feedback">
+    <b>Instructor Comments:</b><br>[ Type feedback here ]<br><br>
+    <b>Part B Score:</b> ___ /10<br>
+    <b>Final Note (Part A + Part B):</b> ___ /20
+  </div>
+  <div class="footer">
+    <em>This report was generated automatically for the English Exam – Business Resources.</em>
+  </div>`;
 
 const params = {
   from_name: name,
