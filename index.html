@@ -157,24 +157,24 @@ function enableFullScreen() {
   document.addEventListener("fullscreenchange", () => {
     const exam = document.getElementById("exam");
 
-    // When exiting fullscreen
+    // Student exits fullscreen
     if (!document.fullscreenElement) {
       if (leftOnce) {
         clearInterval(timerInt);
-        alert("⚠️ Exam paused because fullscreen mode was exited.\nPlease click OK, then re-enter fullscreen to continue.");
+        alert("⚠️ Exam paused because fullscreen mode was exited twice.\nClick OK, then press F11 or the fullscreen icon to return.");
 
-        // Disable interaction but don't hide
-        exam.style.opacity = "0.3";
+        // disable interaction but allow resume
+        exam.style.opacity = "0.4";
         exam.style.pointerEvents = "none";
 
-        // Wait until fullscreen is restored
-        const waitFullscreen = setInterval(() => {
+        // check every second if fullscreen is restored
+        const restoreCheck = setInterval(() => {
           if (document.fullscreenElement) {
             exam.style.opacity = "1";
             exam.style.pointerEvents = "auto";
-            startTimer(); // resume timer
-            clearInterval(waitFullscreen);
-            alert("✅ You are now back in fullscreen. The exam has resumed.");
+            startTimer();
+            clearInterval(restoreCheck);
+            alert("✅ You’re back in fullscreen — the exam has resumed.");
           }
         }, 1000);
 
@@ -184,8 +184,16 @@ function enableFullScreen() {
       }
     }
   });
-}
 
+  // safety fallback — if the browser blocks the fullscreen prompt
+  if (!document.fullscreenElement) {
+    setTimeout(() => {
+      if (!document.fullscreenElement) {
+        alert("If fullscreen didn’t activate, please press F11 to enter fullscreen manually.");
+      }
+    }, 1500);
+  }
+}
   document.getElementById("startBtn").onclick = () => {
     const nameInput = document.getElementById("studentName").value.trim();
     const emailInput = document.getElementById("studentEmail").value.trim();
