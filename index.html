@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded",()=>{
    <p><b>Instructor Comments:</b><br>[Type feedback here]</p>
    <p><b>Part B Score:</b> ___ /10<br><b>Final Note (Part A + Part B):</b> ___ /20</p>`;
 
-  const params = {
+const params = {
   from_name: name,
   from_email: email,
   class_code: "MDO2G3",
@@ -126,7 +126,8 @@ document.addEventListener("DOMContentLoaded",()=>{
   answers: answers.join("<br>"),
   scoreA: score,
   email_body: fd.get("emailBody").replace(/\n/g,"<br>"),
-  subject: `English Exam – Business Resources – ${name} (MDO2G3)`
+  subject: `English Exam – Business Resources – ${name} (MDO2G3)`,
+  message_html: htmlReport
 };
 
    emailjs.send("service_opm4h6b","template_r0u784p",params)
