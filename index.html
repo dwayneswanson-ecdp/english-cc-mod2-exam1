@@ -216,8 +216,13 @@ document.addEventListener("DOMContentLoaded", () => {
       <b>Time Taken:</b> ${minutesUsed} min</p>
       <hr>
       <h3>Part A – Vocabulary Matching (Auto-graded)</h3>
-      <p>${answers.join("<br>")}</p>
-      <p><b>Part A Score:</b> ${score}/10</p>
+<ol style="padding-left:20px; line-height:1.6;">
+  ${answers.map(a => {
+    const isCorrect = a.includes("✅");
+    return `<li style="margin-bottom:8px; color:${isCorrect ? 'green' : '#b00'};">${a}</li>`;
+  }).join("")}
+</ol>
+<p><b>Part A Score:</b> ${score}/10</p>
       <hr>
       <h3>Part B – Email Writing</h3>
       <p>${fd.get("emailBody").replace(/\n/g, "<br>")}</p>
