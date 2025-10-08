@@ -303,96 +303,101 @@ function enableFullScreen() {
       answers.push({ text: `${sel} ${mark}`, correct: isCorrect });
     }
 
-    const htmlReport = `
-      <h2>English Exam – Business Resources – ${name} (MDO2G3)</h2>
-      <p><b>Student Name:</b> ${name}<br>
-      <b>Student Email:</b> ${email}<br>
-      <b>Class Code:</b> MDO2G3<br>
-      <b>Time Taken:</b> ${minutesUsed} min</p>
-      <hr>
-       <h3>Part A – Vocabulary Matching</h3>
-  <table style="border-collapse:collapse;width:100%;margin-top:10px;">
+const htmlReport = `
+  <h2 style="color:#004080;">English Exam – Business Resources – ${name} (MDO2G3)</h2>
+  <p><b>Student Name:</b> ${name}<br>
+  <b>Student Email:</b> ${email}<br>
+  <b>Class Code:</b> MDO2G3<br>
+  <b>Time Taken:</b> ${minutesUsed} min</p>
+  <hr>
+
+  <h3 style="color:#004080;">Part A – Vocabulary Matching</h3>
+  <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:10px;">
     <thead>
-      <tr style="background-color:#004080;color:#fff;text-align:left;">
-        <th style="padding:6px;border:1px solid #ccc;">#</th>
-        <th style="padding:6px;border:1px solid #ccc;">Vocabulary Word</th>
-        <th style="padding:6px;border:1px solid #ccc;">Student’s Answer</th>
-        <th style="padding:6px;border:1px solid #ccc;">Result</th>
-        <th style="padding:6px;border:1px solid #ccc;">Correct Answer</th>
+      <tr style="background:#004080;color:#fff;text-align:left;">
+        <th style="padding:8px;border:1px solid #ccc;">Word</th>
+        <th style="padding:8px;border:1px solid #ccc;">Student Answer</th>
+        <th style="padding:8px;border:1px solid #ccc;">Result</th>
       </tr>
     </thead>
     <tbody>
-      ${Object.keys(correctAnswers).map((key, index) => {
-        const qNum = index + 1;
-        const word = Object.keys(correctAnswers)[index];
-        const vocab = [
-          "Budget","Forecast","KPI","Supplier","Lead Time",
-          "Inventory","Overhead","Sustainability","ROI","Headcount"
-        ][index];
-        const sel = fd.get("q" + qNum) || "No answer";
-        const corr = correctAnswers[key];
-        const isCorrect = sel === corr;
-        const mark = isCorrect ? "✅ Correct" : "❌ Incorrect";
-        const correctText = isCorrect ? "—" : corr;
+      ${Object.keys(correctAnswers).map((q,i)=>{
+        const wordNames = ["Budget","Forecast","KPI","Supplier","Lead Time","Inventory","Overhead","Sustainability","ROI","Headcount"];
+        const sel = fd.get("q"+(i+1)) || "No answer";
+        const corr = correctAnswers["q"+(i+1)];
+        const isCorrect = sel===corr;
+        const mark = isCorrect ? "✅ Correct" : `❌ Incorrect → Correct answer: ${corr}`;
         return `
           <tr>
-            <td style="padding:6px;border:1px solid #ccc;">${qNum}</td>
-            <td style="padding:6px;border:1px solid #ccc;"><b>${vocab}</b></td>
-            <td style="padding:6px;border:1px solid #ccc;">${sel}</td>
-            <td style="padding:6px;border:1px solid #ccc;color:${isCorrect ? 'green' : '#b00'};">${mark}</td>
-            <td style="padding:6px;border:1px solid #ccc;">${correctText}</td>
-          </tr>
-        `;
+            <td style="padding:8px;border:1px solid #ccc;">${wordNames[i]}</td>
+            <td style="padding:8px;border:1px solid #ccc;">${sel}</td>
+            <td style="padding:8px;border:1px solid #ccc;color:${isCorrect?'green':'#b00'};">${mark}</td>
+          </tr>`;
       }).join("")}
     </tbody>
   </table>
   <p><b>Part A Score:</b> ${score}/10</p>
-      <hr>
-      <h3>Part B – Email Writing</h3>
-      <p>${fd.get("emailBody").replace(/\n/g, "<br>")}</p>
-      <hr>
-      <h3>Instructor Feedback & Evaluation</h3>
-<table style="border-collapse:collapse;width:100%;margin-top:10px;">
-  <thead>
-    <tr style="background-color:#004080;color:#fff;text-align:left;">
-      <th style="padding:6px;border:1px solid #ccc;">Criterion</th>
-      <th style="padding:6px;border:1px solid #ccc;">Maximum Score</th>
-      <th style="padding:6px;border:1px solid #ccc;">Instructor Comments</th>
-      <th style="padding:6px;border:1px solid #ccc;">Score Awarded</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="padding:6px;border:1px solid #ccc;">Vocabulary Use</td>
-      <td style="padding:6px;border:1px solid #ccc;">/3</td>
-      <td style="padding:6px;border:1px solid #ccc;" rowspan="4" valign="top">Your writing is terrible, sweetie !</td>
-      <td style="padding:6px;border:1px solid #ccc;">1 / 3</td>
-    </tr>
-    <tr>
-      <td style="padding:6px;border:1px solid #ccc;">Structure & Clarity</td>
-      <td style="padding:6px;border:1px solid #ccc;">/3</td>
-      <td style="padding:6px;border:1px solid #ccc;">1 / 3</td>
-    </tr>
-    <tr>
-      <td style="padding:6px;border:1px solid #ccc;">Language Accuracy & Tone</td>
-      <td style="padding:6px;border:1px solid #ccc;">/2</td>
-      <td style="padding:6px;border:1px solid #ccc;">1 / 2</td>
-    </tr>
-    <tr>
-      <td style="padding:6px;border:1px solid #ccc;">Professional Style</td>
-      <td style="padding:6px;border:1px solid #ccc;">/2</td>
-      <td style="padding:6px;border:1px solid #ccc;">1 / 2</td>
-    </tr>
-  </tbody>
-</table>
+  <hr>
 
-      <p><b>Instructor Comments:</b><br>[Type feedback here]</p>
-      <p><b>Part B Score:</b> ___ /10<br>
-      <b>Final Note (Part A + Part B):</b> ___ /20</p>
-      <div style="border-top:1px solid #ccc;margin-top:20px;padding-top:10px;font-size:13px;">
-        <em>This report was generated automatically for the English Exam – Business Resources.</em>
-      </div>
-    `;
+  <h3 style="color:#004080;">Part B – Instructor Feedback & Evaluation</h3>
+  <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:10px;">
+    <thead>
+      <tr style="background:#004080;color:#fff;text-align:left;">
+        <th style="padding:8px;border:1px solid #ccc;">Criterion</th>
+        <th style="padding:8px;border:1px solid #ccc;">Maximum Score</th>
+        <th style="padding:8px;border:1px solid #ccc;">Score Awarded</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="padding:8px;border:1px solid #ccc;">Vocabulary Use</td>
+        <td style="padding:8px;border:1px solid #ccc;">/3</td>
+        <td style="padding:8px;border:1px solid #ccc;">___ / 3</td>
+      </tr>
+      <tr>
+        <td style="padding:8px;border:1px solid #ccc;">Structure & Clarity</td>
+        <td style="padding:8px;border:1px solid #ccc;">/3</td>
+        <td style="padding:8px;border:1px solid #ccc;">___ / 3</td>
+      </tr>
+      <tr>
+        <td style="padding:8px;border:1px solid #ccc;">Language Accuracy & Tone</td>
+        <td style="padding:8px;border:1px solid #ccc;">/2</td>
+        <td style="padding:8px;border:1px solid #ccc;">___ / 2</td>
+      </tr>
+      <tr>
+        <td style="padding:8px;border:1px solid #ccc;">Professional Style</td>
+        <td style="padding:8px;border:1px solid #ccc;">/2</td>
+        <td style="padding:8px;border:1px solid #ccc;">___ / 2</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <br>
+  <p><b>Instructor Comments:</b></p>
+  <p style="border:1px solid #ccc;padding:10px;border-radius:6px;min-height:50px;">
+    [Type feedback here]
+  </p>
+
+  <h4 style="color:#004080;">Score Summary</h4>
+  <table style="border-collapse:collapse;width:100%;max-width:450px;font-size:15px;">
+    <tr>
+      <td style="padding:8px;border:1px solid #ccc;">Part A Score</td>
+      <td style="padding:8px;border:1px solid #ccc;">${score} / 10</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;border:1px solid #ccc;">Part B Score</td>
+      <td style="padding:8px;border:1px solid #ccc;">___ / 10</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;border:1px solid #ccc;"><b>Final Note</b></td>
+      <td style="padding:8px;border:1px solid #ccc;"><b>___ / 20</b></td>
+    </tr>
+  </table>
+
+  <div style="border-top:1px solid #ccc;margin-top:20px;padding-top:10px;font-size:13px;">
+    <em>This report was generated automatically for the English Exam – Business Resources.</em>
+  </div>
+`;
 
     emailjs.send("service_opm4h6b", "template_r0u784p", {
       from_name: name,
