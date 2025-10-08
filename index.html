@@ -146,18 +146,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 1000);
   }
 
-  function enableFullScreen() {
-    document.documentElement.requestFullscreen();
-    document.addEventListener("fullscreenchange", () => {
-      if (!document.fullscreenElement) {
-        if (leftOnce) submitExam();
-        else {
-          alert("Warning: leaving full screen again will submit your exam.");
-          leftOnce = true;
-        }
+function enableFullScreen() {
+  document.documentElement.requestFullscreen();
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement) {
+      if (leftOnce) {
+        alert("Exam ended because full screen mode was exited twice. The page will now reload.");
+        clearInterval(timerInt);
+        exam.style.display = "none";
+        login.style.display = "block";
+        document.exitFullscreen?.();
+        location.reload(); // Reloads cleanly to reset everything
+      } else {
+        alert("Warning: If you exit full screen again, your exam will automatically end.");
+        leftOnce = true;
       }
-    });
-  }
+    }
+  });
+}
 
   document.getElementById("startBtn").onclick = () => {
     const nameInput = document.getElementById("studentName").value.trim();
@@ -257,6 +263,23 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("EmailJS Error:", err);
     });
   }
+});
+
+// Disable copy, paste, cut, and right-click globally
+document.addEventListener("copy", e => e.preventDefault());
+document.addEventListener("cut", e => e.preventDefault());
+document.addEventListener("paste", e => e.preventDefault());
+document.addEventListener("contextmenu", e => e.preventDefault());
+
+// Block keyboard shortcuts (Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+U, F12, etc.)
+document.addEventListener("keydown", e => {
+  if (
+    (e.ctrlKey || e.metaKey) &&
+    ["c", "v", "x", "u", "a"].includes(e.key.toLowerCase())
+  ) {
+    e.preventDefault();
+  }
+  if (e.key === "F12" || e.key === "Escape") e.preventDefault();
 });
 </script>
 </head>
