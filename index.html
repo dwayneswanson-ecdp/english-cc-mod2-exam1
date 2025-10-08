@@ -152,54 +152,51 @@ document.querySelectorAll("select").forEach(sel => {
   }
 
 function enableFullScreen() {
-  // Request fullscreen when exam starts
   document.documentElement.requestFullscreen?.().catch(() => {});
-  let warnedOnce = false;
+  let examTerminated = false;
 
   // Detect fullscreen exit
   document.addEventListener("fullscreenchange", () => {
-    if (!document.fullscreenElement) {
-      // Show overlay only once per exit
-      if (warnedOnce) return;
-      warnedOnce = true;
+    if (!document.fullscreenElement && !examTerminated) {
+      examTerminated = true;
 
-      // Create overlay message
+      // Clear all input fields and disable form
+      const form = document.getElementById("examForm");
+      form.reset();
+      Array.from(form.elements).forEach(el => {
+        el.disabled = true;
+      });
+
+      // Dark overlay message
       const overlay = document.createElement("div");
-      overlay.id = "fullscreenWarning";
-      overlay.style.cssText = `
-        position:fixed;top:0;left:0;width:100%;height:100%;
-        background:rgba(0,0,0,0.85);color:white;
-        display:flex;flex-direction:column;align-items:center;
-        justify-content:center;text-align:center;z-index:9999;
-        font-family:Arial,Helvetica,sans-serif;font-size:18px;
-      `;
       overlay.innerHTML = `
-        <p>You have exited fullscreen mode.<br><br>
-        Please return to fullscreen to continue your exam.<br><br>
-        <button id="resumeExam"
-          style="padding:12px 25px;font-size:16px;
-          border:none;background:#0066cc;color:white;
-          border-radius:8px;cursor:pointer;">Continue Exam</button></p>
-      `;
+        <div style="
+          position:fixed;top:0;left:0;width:100%;height:100%;
+          background:rgba(0,0,0,0.9);color:white;
+          display:flex;flex-direction:column;align-items:center;
+          justify-content:center;z-index:9999;font-size:20px;text-align:center;">
+          <p><strong>⚠️ Exam Terminated</strong><br><br>
+          You exited fullscreen mode.<br>
+          Your answers have been erased for security reasons.<br><br>
+          Please contact your instructor to restart the exam.</p>
+        </div>`;
       document.body.appendChild(overlay);
 
-      // Handle the Continue button
-      document.getElementById("resumeExam").onclick = () => {
-        // Remove overlay and re-enter fullscreen
-        document.body.removeChild(overlay);
-        document.documentElement.requestFullscreen?.().catch(() => {});
-        warnedOnce = false; // allow warning again if they exit again
-      };
+      // Disable all interaction permanently
+      document.body.style.pointerEvents = "none";
+      document.body.style.userSelect = "none";
+
+      // Optional: auto-refresh after 10 seconds
+      setTimeout(() => location.reload(), 10000);
     }
   });
 
-  // Disable copy/paste (Part A + B)
+  // Disable copy/paste and right-click
   document.addEventListener("copy", e => e.preventDefault());
   document.addEventListener("cut", e => e.preventDefault());
   document.addEventListener("paste", e => e.preventDefault());
   document.addEventListener("contextmenu", e => e.preventDefault());
   document.addEventListener("keydown", e => {
-    // Block Ctrl+C / Ctrl+V / Command+C / Command+V
     if ((e.ctrlKey || e.metaKey) && ["c", "v", "x"].includes(e.key.toLowerCase())) {
       e.preventDefault();
     }
