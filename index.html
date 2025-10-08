@@ -121,18 +121,23 @@ document.addEventListener("DOMContentLoaded", () => {
     q10: "Number of employees in a company or department."
   };
 
-  // Randomize dropdown options but keep first option fixed
-  document.querySelectorAll("select").forEach(sel => {
-    const first = sel.options[0];
-    const rest = Array.from(sel.options).slice(1);
-    for (let i = rest.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [rest[i].text, rest[j].text] = [rest[j].text, rest[i].text];
-    }
-    sel.innerHTML = "";
-    sel.appendChild(first);
-    rest.forEach(o => sel.appendChild(o));
-  });
+// Randomize dropdowns but keep the first option ("-- Choose --") fixed and selected
+document.querySelectorAll("select").forEach(sel => {
+  const options = Array.from(sel.options);
+  const first = options[0]; // "-- Choose --"
+  const rest = options.slice(1);
+
+  // Shuffle only the rest
+  for (let i = rest.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rest[i].text, rest[j].text] = [rest[j].text, rest[i].text];
+  }
+
+  sel.innerHTML = ""; // clear current list
+  sel.appendChild(first); // re-add the "-- Choose --" first
+  rest.forEach(o => sel.appendChild(o)); // then randomized rest
+  sel.selectedIndex = 0; // make sure "-- Choose --" is the default selected
+});
 
   function startTimer() {
     timerInt = setInterval(() => {
