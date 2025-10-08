@@ -208,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const mark = isCorrect
         ? "✅ Correct"
         : `❌ Incorrect → Correct answer: "${corr}"`;
-      answers.push({ text: `${i}. ${sel} ${mark}`, correct: isCorrect });
+      answers.push({ text: `${sel} ${mark}`, correct: isCorrect });
     }
 
     const htmlReport = `
