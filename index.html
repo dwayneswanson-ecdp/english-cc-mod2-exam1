@@ -97,6 +97,7 @@
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   emailjs.init("Bb0oPYBiZGQcyIz5r");
@@ -188,12 +189,13 @@ document.addEventListener("DOMContentLoaded", () => {
     submitExam();
   });
 
+  // ✅ Submit function (inside the same scope)
   function submitExam() {
     clearInterval(timerInt);
 
     const fd = new FormData(form);
-    const name = fd.get("studentName");
-    const email = fd.get("studentEmail");
+    const name = fd.get("studentName") || document.getElementById("studentNameField").value;
+    const email = fd.get("studentEmail") || document.getElementById("studentEmailField").value;
     const minutesUsed = 40 - Math.floor(timeLeft / 60);
 
     const answers = [];
@@ -201,11 +203,12 @@ document.addEventListener("DOMContentLoaded", () => {
     for (let i = 1; i <= 10; i++) {
       const sel = fd.get("q" + i) || "No answer";
       const corr = correctAnswers["q" + i];
-      if (sel === corr) score++;
-      const mark = (sel === corr)
+      const isCorrect = sel === corr;
+      if (isCorrect) score++;
+      const mark = isCorrect
         ? "✅ Correct"
         : `❌ Incorrect → Correct answer: "${corr}"`;
-      answers.push(`${i}. ${sel} ${mark}`);
+      answers.push({ text: `${i}. ${sel} ${mark}`, correct: isCorrect });
     }
 
     const htmlReport = `
@@ -216,32 +219,29 @@ document.addEventListener("DOMContentLoaded", () => {
       <b>Time Taken:</b> ${minutesUsed} min</p>
       <hr>
       <h3>Part A – Vocabulary Matching (Auto-graded)</h3>
-<ol style="padding-left:20px; line-height:1.6;">
-  ${answers.map(a => {
-    const isCorrect = a.includes("✅");
-    return `<li style="margin-bottom:8px; color:${isCorrect ? 'green' : '#b00'};">${a}</li>`;
-  }).join("")}
-</ol>
-<p><b>Part A Score:</b> ${score}/10</p>
+      <ol style="padding-left:20px; line-height:1.6;">
+        ${answers.map(a => `<li style="margin-bottom:6px; color:${a.correct ? 'green' : '#b00'};">${a.text}</li>`).join("")}
+      </ol>
+      <p><b>Part A Score:</b> ${score}/10</p>
       <hr>
       <h3>Part B – Email Writing</h3>
       <p>${fd.get("emailBody").replace(/\n/g, "<br>")}</p>
       <hr>
       <h3>Instructor Feedback & Evaluation</h3>
       <ul>
-        <li><b>1. Vocabulary Use (/3)</b> – Uses at least 3 words from the vocabulary list correctly.</li>
-        <li><b>2. Structure & Clarity (/3)</b> – Logical flow (introduction → problem → solution → closing).</li>
-        <li><b>3. Language Accuracy & Tone (/2)</b> – Grammar and tone are professional.</li>
-        <li><b>4. Professional Style (/2)</b> – Appropriate greeting and closing.</li>
+        <li><b>1. Vocabulary Use (/3)</b></li>
+        <li><b>2. Structure & Clarity (/3)</b></li>
+        <li><b>3. Language Accuracy & Tone (/2)</b></li>
+        <li><b>4. Professional Style (/2)</b></li>
       </ul>
-      <p><b>Instructor Comments:</b><br>[ Type feedback here ]</p>
+      <p><b>Instructor Comments:</b><br>[Type feedback here]</p>
       <p><b>Part B Score:</b> ___ /10<br>
       <b>Final Note (Part A + Part B):</b> ___ /20</p>
       <div style="border-top:1px solid #ccc;margin-top:20px;padding-top:10px;font-size:13px;">
         <em>This report was generated automatically for the English Exam – Business Resources.</em>
-      </div>`;
+      </div>
+    `;
 
-    // Send email (HTML body)
     emailjs.send("service_opm4h6b", "template_r0u784p", {
       from_name: name,
       from_email: email,
@@ -252,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("✅ Exam submitted successfully. You may close this window.");
       document.getElementById("exam").style.display = "none";
     })
-    .catch((err) => {
+    .catch(err => {
       alert("❌ Error sending exam: " + err.text);
       console.error("EmailJS Error:", err);
     });
