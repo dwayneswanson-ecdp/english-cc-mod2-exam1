@@ -339,7 +339,13 @@ const htmlReport = `
   <p><b>Part A Score:</b> ${score}/10</p>
   <hr>
 
-  <h3 style="color:#004080;">Part B – Instructor Feedback & Evaluation</h3>
+  <h3 style="color:#004080;">Part B – Email Writing & Instructor Feedback</h3>
+
+  <p><b>Student’s Response:</b></p>
+  <div style="border:1px solid #ccc;border-radius:6px;padding:10px;margin-bottom:15px;background:#f9f9f9;">
+    ${fd.get("emailBody").replace(/\n/g,"<br>")}
+  </div>
+
   <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:10px;">
     <thead>
       <tr style="background:#004080;color:#fff;text-align:left;">
