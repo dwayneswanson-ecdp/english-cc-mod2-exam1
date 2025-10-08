@@ -1,1 +1,190 @@
-Hello from the English CC Exam site!
+<!-- index.html  (template) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>English CC Exam – Business Resources</title>
+<style>
+  body {font-family:Arial, sans-serif; margin:0; padding:0; background:#f9f9f9;}
+  header {background:#004080; color:#fff; padding:10px 20px;}
+  main {max-width:800px; margin:20px auto; background:#fff; padding:20px; border-radius:10px;}
+  h1,h2 {color:#004080;}
+  .hidden {display:none;}
+  select, textarea, input {width:100%; margin:5px 0; padding:8px;}
+  #timer {font-weight:bold; color:#004080; text-align:right;}
+  .warning {color:#cc0000;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  emailjs.init("Bb0oPYBiZGQcyIz5r"); 
+  let timeLeft = 40 * 60;
+  let timerInt, leftOnce = false;
+
+  const form = document.getElementById("examForm");
+  const login = document.getElementById("login");
+  const exam = document.getElementById("exam");
+  const testMode = document.getElementById("testMode");
+  const timerDisplay = document.getElementById("timer");
+
+  function startTimer(){
+    timerInt = setInterval(()=>{
+      timeLeft--;
+      const min = Math.floor(timeLeft/60), sec = timeLeft%60;
+      timerDisplay.textContent = `Time Remaining: ${min}:${sec.toString().padStart(2,"0")}`;
+      if(timeLeft<=0){clearInterval(timerInt); submitExam();}
+    },1000);
+  }
+
+  function enableFullScreen(){
+    if(testMode.checked) return;
+    document.documentElement.requestFullscreen();
+    document.addEventListener("fullscreenchange", ()=>{
+      if(!document.fullscreenElement){
+        if(leftOnce){submitExam();}
+        else {alert("Warning: Leaving full screen again will submit your exam."); leftOnce=true;}
+      }
+    });
+  }
+
+  document.getElementById("startBtn").onclick=()=>{
+    const code=document.getElementById("classCode").value.trim();
+    if(code!=="MDO2G3"){alert("Invalid class code"); return;}
+    login.classList.add("hidden"); exam.classList.remove("hidden");
+    if(!testMode.checked){enableFullScreen(); startTimer();}
+  }
+
+  function submitExam(){
+    clearInterval(timerInt);
+    const formData=new FormData(form);
+    const answers=[];
+    for(let i=1;i<=10;i++){
+      answers.push(`${i}. ${formData.get("q"+i)}`);
+    }
+    const templateParams={
+      from_name: formData.get("studentName"),
+      from_email: formData.get("studentEmail"),
+      class_code: "MDO2G3",
+      answers: answers.join("<br>"),
+      email_body: formData.get("emailBody"),
+      subject:`CC Exam Submission – ${formData.get("studentName")} (MDO2G3)`
+    };
+    emailjs.send("service_opm4h6b","template_r0u784p",templateParams)
+      .then(()=>alert("✅ Your exam has been submitted."), err=>alert("Error: "+err.text));
+    exam.classList.add("hidden");
+  }
+
+  form.addEventListener("submit", e=>{e.preventDefault(); submitExam();});
+});
+</script>
+</head>
+<body>
+<header>
+  <h1>English CC Exam – Business Resources</h1>
+  <div id="timer"></div>
+</header>
+
+<main>
+  <label><input type="checkbox" id="testMode"> 🧑‍🏫 Instructor Test Mode (no timer / no full-screen)</label>
+
+  <section id="login">
+    <h2>Login</h2>
+    <p>Please enter your details to begin.</p>
+    <label>Name:<input type="text" id="studentName" required></label>
+    <label>Email:<input type="email" id="studentEmail" required></label>
+    <label>Class Code:<input type="text" id="classCode" required></label>
+    <button id="startBtn">Start Exam</button>
+  </section>
+
+  <section id="exam" class="hidden">
+    <form id="examForm">
+      <h2>Part A – Vocabulary Matching</h2>
+      <p>Select the correct definition for each term.</p>
+      <ol>
+        <li>Budget <select name="q1">
+          <option value="">--Choose--</option>
+          <option>A plan for how money will be spent during a specific period.</option>
+          <option>The total number of employees in a company.</option>
+          <option>Regular costs that vary with production.</option>
+          <option>A financial gain compared to cost.</option>
+        </select></li>
+        <li>Forecast <select name="q2">
+          <option value="">--Choose--</option>
+          <option>A prediction of future sales, costs, or results.</option>
+          <option>A company providing goods or services.</option>
+          <option>Ongoing business expenses.</option>
+          <option>The process of hiring staff.</option>
+        </select></li>
+        <li>KPI <select name="q3">
+          <option value="">--Choose--</option>
+          <option>A measurable value showing how effectively goals are achieved.</option>
+          <option>A plan for money spending.</option>
+          <option>The time between order and delivery.</option>
+          <option>A prediction of sales.</option>
+        </select></li>
+        <li>Supplier <select name="q4">
+          <option value="">--Choose--</option>
+          <option>A company providing goods or services to another.</option>
+          <option>Expenses not linked to a product.</option>
+          <option>The financial return on investment.</option>
+          <option>A staff member giving feedback.</option>
+        </select></li>
+        <li>Lead Time <select name="q5">
+          <option value="">--Choose--</option>
+          <option>The time between ordering and receiving something.</option>
+          <option>Extra costs of running a business.</option>
+          <option>Number of employees.</option>
+          <option>A business sustainability report.</option>
+        </select></li>
+        <li>Inventory <select name="q6">
+          <option value="">--Choose--</option>
+          <option>The goods and materials a company holds.</option>
+          <option>The expected revenue.</option>
+          <option>The time between orders.</option>
+          <option>Company overhead costs.</option>
+        </select></li>
+        <li>Overhead <select name="q7">
+          <option value="">--Choose--</option>
+          <option>Ongoing expenses not tied to one product or service.</option>
+          <option>A plan for company goals.</option>
+          <option>The delivery delay period.</option>
+          <option>The total sales revenue.</option>
+        </select></li>
+        <li>Sustainability <select name="q8">
+          <option value="">--Choose--</option>
+          <option>Managing resources for long-term balance.</option>
+          <option>The company’s annual sales.</option>
+          <option>A measurable performance indicator.</option>
+          <option>Stock of materials.</option>
+        </select></li>
+        <li>ROI <select name="q9">
+          <option value="">--Choose--</option>
+          <option>Financial gain or loss compared to cost of investment.</option>
+          <option>Total operating expenses.</option>
+          <option>Employee satisfaction level.</option>
+          <option>Plan for spending.</option>
+        </select></li>
+        <li>Headcount <select name="q10">
+          <option value="">--Choose--</option>
+          <option>Number of employees in a company or department.</option>
+          <option>Amount of raw materials held.</option>
+          <option>Prediction of future costs.</option>
+          <option>Profit after expenses.</option>
+        </select></li>
+      </ol>
+
+      <h2>Part B – Email Writing Task</h2>
+      <p>You are a team leader and one of your suppliers has delayed an important delivery.<br>
+         Write a short professional email to your manager:<br>
+         – Explain the situation briefly<br>
+         – Propose a solution or next step<br>
+         – Use a polite and professional tone.</p>
+      <textarea name="emailBody" rows="10" required></textarea>
+
+      <button type="submit">Submit Exam</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>
