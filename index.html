@@ -148,17 +148,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function enableFullScreen() {
   document.documentElement.requestFullscreen();
-  document.addEventListener("fullscreenchange", () => {
+
+  document.addEventListener("fullscreenchange", async () => {
+    // When the user exits full screen
     if (!document.fullscreenElement) {
       if (leftOnce) {
-        alert("Exam ended because full screen mode was exited twice. The page will now reload.");
         clearInterval(timerInt);
-        exam.style.display = "none";
-        login.style.display = "block";
-        document.exitFullscreen?.();
-        location.reload(); // Reloads cleanly to reset everything
+        alert("Exam paused because full screen mode was exited twice.\nPlease click OK and re-enter full screen to continue.");
+
+        // Hide timer and exam to prevent answering outside full screen
+        exam.style.opacity = "0.2";
+        exam.style.pointerEvents = "none";
+
+        // Wait until they go back into fullscreen
+        const waitForFullscreen = setInterval(() => {
+          if (document.fullscreenElement) {
+            exam.style.opacity = "1";
+            exam.style.pointerEvents = "auto";
+            startTimer(); // resume timer
+            clearInterval(waitForFullscreen);
+          }
+        }, 1000);
+
       } else {
-        alert("Warning: If you exit full screen again, your exam will automatically end.");
+        alert("Warning: If you exit full screen again, your exam will be paused until you return.");
         leftOnce = true;
       }
     }
