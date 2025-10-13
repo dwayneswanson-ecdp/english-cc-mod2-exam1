@@ -112,7 +112,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   emailjs.init("Bb0oPYBiZGQcyIz5r");
 
-  /* ---------- Elements ---------- */
   const login = document.getElementById("login");
   const exam = document.getElementById("exam");
   const partA = document.getElementById("partA");
@@ -120,8 +119,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const timerDisplay = document.getElementById("timer");
   const form = document.getElementById("examForm");
 
-  /* ---------- Timer / Fullscreen ---------- */
   let timeLeft = 40 * 60, timerInt;
+
   function startTimer() {
     timerInt = setInterval(() => {
       timeLeft--;
@@ -135,7 +134,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function terminateExam() {
-    // Clear inputs and lock UI
     form.reset();
     Array.from(form.elements).forEach(el => el.disabled = true);
     const overlay = document.createElement("div");
@@ -156,7 +154,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ---------- Anti-copy/paste (global) ---------- */
   document.addEventListener("copy", e => e.preventDefault());
   document.addEventListener("cut", e => e.preventDefault());
   document.addEventListener("paste", e => e.preventDefault());
@@ -166,7 +163,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "F12" || e.key === "Escape") e.preventDefault();
   });
 
-  /* ---------- Correct answers ---------- */
   const correctAnswers = {
     q1: "A plan for how money will be spent during a specific period.",
     q2: "A prediction of future sales, costs, or results.",
@@ -181,7 +177,6 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   const wordNames = ["Budget","Forecast","KPI","Supplier","Lead Time","Inventory","Overhead","Sustainability","ROI","Headcount"];
 
-  /* ---------- Randomize dropdowns; keep “-- Choose --” default ---------- */
   document.querySelectorAll("select").forEach(sel => {
     const opts = Array.from(sel.options);
     const first = opts[0];
@@ -196,25 +191,14 @@ document.addEventListener("DOMContentLoaded", () => {
     sel.selectedIndex = 0;
   });
 
-  /* ---------- Quill editor (Part B) ---------- */
-  const quillToolbar = [
-    ['bold','italic','underline'],
-    [{ list: 'ordered' }, { list: 'bullet' }],
-    [{ align: [] }],
-    ['clean']
-  ];
   const quill = new Quill('#editor', {
     theme: 'snow',
-    modules: { toolbar: quillToolbar }
+    modules: { toolbar: [['bold','italic','underline'],[{ list: 'ordered' }, { list: 'bullet' }],[{ align: [] }],['clean']] }
   });
-
-  // Block paste inside the editor as well
   quill.root.addEventListener('paste', e => e.preventDefault());
-  // Still allow typing inside Quill: re-enable selection within editor only
   quill.root.style.webkitUserSelect = 'text';
   quill.root.style.userSelect = 'text';
 
-  /* ---------- Login / Start ---------- */
   document.getElementById("startBtn").onclick = () => {
     const nameInput = document.getElementById("studentName").value.trim();
     const emailInput = document.getElementById("studentEmail").value.trim();
@@ -222,7 +206,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!nameInput || !emailInput) { alert("Please enter your name and email before starting."); return; }
     if (code !== "MDO2G3") { alert("Invalid class code."); return; }
 
-    // Store into hidden fields
     document.getElementById("studentNameField").value = nameInput;
     document.getElementById("studentEmailField").value = emailInput;
     document.getElementById("classCodeField").value = code;
@@ -235,20 +218,17 @@ document.addEventListener("DOMContentLoaded", () => {
     startTimer();
   };
 
-  /* ---------- Navigation between Part A and Part B (Option 2) ---------- */
   document.getElementById("toPartB").addEventListener("click", () => {
     partA.classList.remove("active");
     partB.classList.add("active");
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
-
   document.getElementById("toPartA").addEventListener("click", () => {
     partB.classList.remove("active");
     partA.classList.add("active");
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  /* ---------- Submit ---------- */
   form.addEventListener("submit", e => {
     e.preventDefault();
     submitExam();
@@ -256,13 +236,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function submitExam() {
     clearInterval(timerInt);
-
     const fd = new FormData(form);
     const name = fd.get("studentName") || document.getElementById("studentNameField").value;
     const email = fd.get("studentEmail") || document.getElementById("studentEmailField").value;
     const minutesUsed = 40 - Math.floor(timeLeft / 60);
-
-    // Collect Part A results
     let score = 0;
     const rows = [];
     for (let i = 1; i <= 10; i++) {
@@ -270,105 +247,51 @@ document.addEventListener("DOMContentLoaded", () => {
       const corr = correctAnswers["q" + i];
       const ok = sel === corr;
       if (ok) score++;
-      rows.push({
-        word: wordNames[i-1],
-        sel,
-        corr,
-        ok
-      });
+      rows.push({ word: wordNames[i-1], sel, corr, ok });
     }
-
-    // Collect Part B from Quill (HTML)
-    const emailHtml = quill.root.innerHTML
-      .replace(/<p><br><\/p>/g, "")    // trim empty lines
-      .trim();
-
-    // Build report HTML
+    const emailHtml = quill.root.innerHTML.replace(/<p><br><\/p>/g, "").trim();
     const partATable = `
       <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:10px;">
-        <thead>
-          <tr style="background:#004080;color:#fff;text-align:left;">
-            <th style="padding:8px;border:1px solid #ccc;">Word</th>
-            <th style="padding:8px;border:1px solid #ccc;">Student Answer</th>
-            <th style="padding:8px;border:1px solid #ccc;">Result</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(r => `
-            <tr>
-              <td style="padding:8px;border:1px solid #ccc;">${r.word}</td>
-              <td style="padding:8px;border:1px solid #ccc;">${r.sel}</td>
-              <td style="padding:8px;border:1px solid #ccc; color:${r.ok?'green':'#b00'};">
-                ${r.ok ? '✅ Correct' : `❌ Incorrect → Correct answer: ${r.corr}`}
-              </td>
-            </tr>
-          `).join("")}
+        <thead><tr style="background:#004080;color:#fff;text-align:left;">
+          <th style="padding:8px;border:1px solid #ccc;">Word</th>
+          <th style="padding:8px;border:1px solid #ccc;">Student Answer</th>
+          <th style="padding:8px;border:1px solid #ccc;">Result</th></tr></thead>
+        <tbody>${rows.map(r=>`
+          <tr><td style="padding:8px;border:1px solid #ccc;">${r.word}</td>
+          <td style="padding:8px;border:1px solid #ccc;">${r.sel}</td>
+          <td style="padding:8px;border:1px solid #ccc;color:${r.ok?'green':'#b00'};">${r.ok?'✅ Correct':`❌ Incorrect → Correct answer: ${r.corr}`}</td></tr>`).join("")}
         </tbody>
-      </table>
-    `;
-
+      </table>`;
     const htmlReport = `
       <h2 style="color:#004080;">English Exam – Business Resources – ${name} (MDO2G3)</h2>
-      <p><b>Student Name:</b> ${name}<br>
-      <b>Student Email:</b> ${email}<br>
-      <b>Class Code:</b> MDO2G3<br>
-      <b>Time Taken:</b> ${minutesUsed} min</p>
-      <hr>
-
-      <h3 style="color:#004080;">Part A – Vocabulary Matching</h3>
-      ${partATable}
-      <p><b>Part A Score:</b> ${score}/10</p>
-      <hr>
-
+      <p><b>Student Name:</b> ${name}<br><b>Student Email:</b> ${email}<br><b>Class Code:</b> MDO2G3<br><b>Time Taken:</b> ${minutesUsed} min</p><hr>
+      <h3 style="color:#004080;">Part A – Vocabulary Matching</h3>${partATable}<p><b>Part A Score:</b> ${score}/10</p><hr>
       <h3 style="color:#004080;">Part B – Email Writing & Instructor Feedback</h3>
       <p><b>Student’s Response:</b></p>
-      <div style="border:1px solid #ccc;border-radius:6px;padding:12px;margin-bottom:15px;background:#f9f9f9;">
-        ${emailHtml || "<em>(No content)</em>"}
-      </div>
-
+      <div style="border:1px solid #ccc;border-radius:6px;padding:12px;margin-bottom:15px;background:#f9f9f9;">${emailHtml || "<em>(No content)</em>"}</div>
       <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:10px;">
-        <thead>
-          <tr style="background:#004080;color:#fff;text-align:left;">
-            <th style="padding:8px;border:1px solid #ccc;">Criterion</th>
-            <th style="padding:8px;border:1px solid #ccc;">Maximum Score</th>
-            <th style="padding:8px;border:1px solid #ccc;">Score Awarded</th>
-          </tr>
-        </thead>
+        <thead><tr style="background:#004080;color:#fff;text-align:left;">
+          <th style="padding:8px;border:1px solid #ccc;">Criterion</th>
+          <th style="padding:8px;border:1px solid #ccc;">Maximum Score</th>
+          <th style="padding:8px;border:1px solid #ccc;">Score Awarded</th></tr></thead>
         <tbody>
           <tr><td style="padding:8px;border:1px solid #ccc;">Vocabulary Use</td><td style="padding:8px;border:1px solid #ccc;">/3</td><td style="padding:8px;border:1px solid #ccc;">___ / 3</td></tr>
           <tr><td style="padding:8px;border:1px solid #ccc;">Structure & Clarity</td><td style="padding:8px;border:1px solid #ccc;">/3</td><td style="padding:8px;border:1px solid #ccc;">___ / 3</td></tr>
           <tr><td style="padding:8px;border:1px solid #ccc;">Language Accuracy & Tone</td><td style="padding:8px;border:1px solid #ccc;">/2</td><td style="padding:8px;border:1px solid #ccc;">___ / 2</td></tr>
           <tr><td style="padding:8px;border:1px solid #ccc;">Professional Style</td><td style="padding:8px;border:1px solid #ccc;">/2</td><td style="padding:8px;border:1px solid #ccc;">___ / 2</td></tr>
-        </tbody>
-      </table>
-
-      <br>
+        </tbody></table>
+      <br><p><b>Instructor Comments:</b></p>
+      <p style="border:1px solid #ccc;padding:10px;border-radius:6px;min-height:50px;background:#fdfdfd;">[Type feedback here]</p>
       <h4 style="color:#004080;">Score Summary</h4>
       <table style="border-collapse:collapse;width:100%;max-width:460px;font-size:15px;">
         <tr><td style="padding:8px;border:1px solid #ccc;">Part A Score</td><td style="padding:8px;border:1px solid #ccc;">${score} / 10</td></tr>
         <tr><td style="padding:8px;border:1px solid #ccc;">Part B Score</td><td style="padding:8px;border:1px solid #ccc;">___ / 10</td></tr>
         <tr><td style="padding:8px;border:1px solid #ccc;"><b>Final Note</b></td><td style="padding:8px;border:1px solid #ccc;"><b>___ / 20</b></td></tr>
       </table>
-
-      <div style="border-top:1px solid #ccc;margin-top:20px;padding-top:10px;font-size:13px;">
-        <em>This report was generated automatically for the English Exam – Business Resources.</em>
-      </div>
-    `;
-
-    emailjs.send("service_opm4h6b", "template_r0u784p", {
-      from_name: name,
-      from_email: email,
-      subject: `${name} – English Exam – Business Resources (MDO2G3)`,
-      message_html: htmlReport
-    })
-    .then(() => {
-      alert("✅ Exam submitted successfully. You may close this window.");
-      document.getElementById("exam").style.display = "none";
-    })
-    .catch(err => {
-      alert("❌ Error sending exam: " + err.text);
-      console.error("EmailJS Error:", err);
-    });
+      <div style="border-top:1px solid #ccc;margin-top:20px;padding-top:10px;font-size:13px;"><em>This report was generated automatically for the English Exam – Business Resources.</em></div>`;
+    emailjs.send("service_opm4h6b","template_r0u784p",{from_name:name,from_email:email,subject:`${name} – English Exam – Business Resources (MDO2G3)`,message_html:htmlReport})
+    .then(()=>{alert("✅ Exam submitted successfully. You may close this window.");document.getElementById("exam").style.display="none";})
+    .catch(err=>{alert("❌ Error sending exam: " + err.text);console.error("EmailJS Error:",err);});
   }
 });
 </script>
@@ -381,152 +304,10 @@ document.addEventListener("DOMContentLoaded", () => {
 </header>
 
 <main>
-  <!-- LOGIN -->
   <section id="login">
     <h2>Start Exam</h2>
     <p>Enter your details to begin. Once started, you will have <b>40 minutes</b>.</p>
     <label>Name:</label><input type="text" id="studentName" required>
     <label>Email:</label><input type="email" id="studentEmail" required>
     <label>Class Code:</label><input type="text" id="classCode" required>
-    <div class="btn-row" style="margin-top:10px;">
-      <button id="startBtn">Start Exam</button>
-    </div>
-  </section>
-
-  <!-- EXAM -->
-  <section id="exam" style="display:none;">
-    <form id="examForm">
-      <!-- Hidden login fields -->
-      <input type="hidden" name="studentName" id="studentNameField">
-      <input type="hidden" name="studentEmail" id="studentEmailField">
-      <input type="hidden" name="classCode" id="classCodeField">
-
-      <!-- PART A -->
-      <section id="partA" class="active divider">
-        <h2>Part A – Vocabulary Matching</h2>
-        <p>Match each word to its correct definition.</p>
-        <ol>
-          <li>Budget
-            <select name="q1">
-              <option value="">-- Choose --</option>
-              <option>A plan for how money will be spent during a specific period.</option>
-              <option>The time between ordering and receiving something.</option>
-              <option>The goods and materials a company holds.</option>
-              <option>A company providing goods or services to another.</option>
-            </select>
-          </li>
-          <li>Forecast
-            <select name="q2">
-              <option value="">-- Choose --</option>
-              <option>A prediction of future sales, costs, or results.</option>
-              <option>Ongoing expenses not tied to one product or service.</option>
-              <option>Financial gain or loss compared to cost of investment.</option>
-              <option>Number of employees in a company or department.</option>
-            </select>
-          </li>
-          <li>KPI
-            <select name="q3">
-              <option value="">-- Choose --</option>
-              <option>A measurable value showing how effectively goals are achieved.</option>
-              <option>A plan for how money will be spent during a specific period.</option>
-              <option>The time between ordering and receiving something.</option>
-              <option>A prediction of future sales, costs, or results.</option>
-            </select>
-          </li>
-          <li>Supplier
-            <select name="q4">
-              <option value="">-- Choose --</option>
-              <option>A company providing goods or services to another.</option>
-              <option>Ongoing expenses not tied to one product or service.</option>
-              <option>Financial gain or loss compared to cost of investment.</option>
-              <option>A staff member giving feedback.</option>
-            </select>
-          </li>
-          <li>Lead Time
-            <select name="q5">
-              <option value="">-- Choose --</option>
-              <option>The time between ordering and receiving something.</option>
-              <option>Extra costs of running a business.</option>
-              <option>Number of employees in a company or department.</option>
-              <option>A business sustainability report.</option>
-            </select>
-          </li>
-          <li>Inventory
-            <select name="q6">
-              <option value="">-- Choose --</option>
-              <option>The goods and materials a company holds.</option>
-              <option>The expected revenue.</option>
-              <option>The time between orders.</option>
-              <option>Company overhead costs.</option>
-            </select>
-          </li>
-          <li>Overhead
-            <select name="q7">
-              <option value="">-- Choose --</option>
-              <option>Ongoing expenses not tied to one product or service.</option>
-              <option>A plan for company goals.</option>
-              <option>The delivery delay period.</option>
-              <option>The total sales revenue.</option>
-            </select>
-          </li>
-          <li>Sustainability
-            <select name="q8">
-              <option value="">-- Choose --</option>
-              <option>Managing resources for long-term balance.</option>
-              <option>The company’s annual sales.</option>
-              <option>A measurable performance indicator.</option>
-              <option>Stock of materials.</option>
-            </select>
-          </li>
-          <li>ROI
-            <select name="q9">
-              <option value="">-- Choose --</option>
-              <option>Financial gain or loss compared to cost of investment.</option>
-              <option>Total operating expenses.</option>
-              <option>Employee satisfaction level.</option>
-              <option>Plan for spending.</option>
-            </select>
-          </li>
-          <li>Headcount
-            <select name="q10">
-              <option value="">-- Choose --</option>
-              <option>Number of employees in a company or department.</option>
-              <option>Amount of raw materials held.</option>
-              <option>Prediction of future costs.</option>
-              <option>Profit after expenses.</option>
-            </select>
-          </li>
-        </ol>
-
-        <div class="btn-row">
-          <button type="button" id="toPartB">Next Section →</button>
-        </div>
-      </section>
-
-      <!-- PART B -->
-      <section id="partB" class="divider">
-        <h2>Part B – Email Writing Task</h2>
-        <p>
-          You are a team leader. One of your suppliers has delayed an important delivery.
-          Write a short email to your manager. In your email, explain the problem, suggest a
-          solution, and use a polite and professional tone. You must use at least
-          <b>3 words from the vocabulary list.</b>
-        </p>
-
-        <!-- Quill editor -->
-        <div class="editor-card">
-          <div id="editor-toolbar"></div>
-          <div id="editor"></div>
-        </div>
-        <p class="note">Formatting tools enabled: bold, italic, underline, lists, alignment, clear.</p>
-
-        <div class="btn-row" style="margin-top:16px;">
-          <button type="button" class="btn-light" id="toPartA">← Back to Part A</button>
-          <button type="submit">Submit Exam</button>
-        </div>
-      </section>
-    </form>
-  </section>
-</main>
-</body>
-</html>
+    <div class="btn-row" style="margin-top:10px;"><button id="startBtn">Start
