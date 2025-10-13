@@ -108,125 +108,92 @@
 <!-- Quill JS -->
 <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  emailjs.init("Bb0oPYBiZGQcyIz5r");
+document.addEventListener("DOMContentLoaded", function() {
+  // Initialize EmailJS safely
+  if (window.emailjs) {
+    emailjs.init("Bb0oPYBiZGQcyIz5r");
+  }
 
   const login = document.getElementById("login");
   const exam = document.getElementById("exam");
+  const startBtn = document.getElementById("startBtn");
+  const toPartA = document.getElementById("toPartA");
+  const toPartB = document.getElementById("toPartB");
   const partA = document.getElementById("partA");
   const partB = document.getElementById("partB");
   const timerDisplay = document.getElementById("timer");
   const form = document.getElementById("examForm");
 
-  let timeLeft = 40 * 60, timerInt;
-
-  function startTimer() {
-    timerInt = setInterval(() => {
-      timeLeft--;
-      const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
-      timerDisplay.textContent = `Time Remaining: ${m}:${s.toString().padStart(2, "0")}`;
-      if (timeLeft <= 0) {
-        clearInterval(timerInt);
-        submitExam();
-      }
-    }, 1000);
-  }
-
-  function terminateExam() {
-    form.reset();
-    Array.from(form.elements).forEach(el => el.disabled = true);
-    const overlay = document.createElement("div");
-    overlay.innerHTML = `
-      <div style="
-        position:fixed; inset:0; background:rgba(0,0,0,0.9); color:#fff;
-        display:flex; align-items:center; justify-content:center; z-index:9999; text-align:center; padding:20px;">
-        <div><h2>⚠️ Exam Terminated</h2><p>You exited fullscreen. Inputs were erased for security.</p></div>
-      </div>`;
-    document.body.appendChild(overlay);
-    setTimeout(() => location.reload(), 8000);
-  }
-
-  function enableFullScreen() {
-    document.documentElement.requestFullscreen?.().catch(() => {});
-    document.addEventListener("fullscreenchange", () => {
-      if (!document.fullscreenElement) terminateExam();
-    });
-  }
-
-  document.addEventListener("copy", e => e.preventDefault());
-  document.addEventListener("cut", e => e.preventDefault());
-  document.addEventListener("paste", e => e.preventDefault());
-  document.addEventListener("contextmenu", e => e.preventDefault());
-  document.addEventListener("keydown", e => {
-    if ((e.ctrlKey || e.metaKey) && ["c","v","x","u","a"].includes(e.key.toLowerCase())) e.preventDefault();
-    if (e.key === "F12" || e.key === "Escape") e.preventDefault();
-  });
+  let timeLeft = 40 * 60;
+  let timer;
 
   const correctAnswers = {
-    q1: "A plan for how money will be spent during a specific period.",
-    q2: "A prediction of future sales, costs, or results.",
-    q3: "A measurable value showing how effectively goals are achieved.",
-    q4: "A company providing goods or services to another.",
-    q5: "The time between ordering and receiving something.",
-    q6: "The goods and materials a company holds.",
-    q7: "Ongoing expenses not tied to one product or service.",
-    q8: "Managing resources for long-term balance.",
-    q9: "Financial gain or loss compared to cost of investment.",
-    q10: "Number of employees in a company or department."
+    q1:"A plan for how money will be spent during a specific period.",
+    q2:"A prediction of future sales, costs, or results.",
+    q3:"A measurable value showing how effectively goals are achieved.",
+    q4:"A company providing goods or services to another.",
+    q5:"The time between ordering and receiving something."
   };
-  const wordNames = ["Budget","Forecast","KPI","Supplier","Lead Time","Inventory","Overhead","Sustainability","ROI","Headcount"];
 
-  document.querySelectorAll("select").forEach(sel => {
-    const opts = Array.from(sel.options);
-    const first = opts[0];
-    const rest = opts.slice(1);
-    for (let i = rest.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [rest[i].text, rest[j].text] = [rest[j].text, rest[i].text];
-    }
-    sel.innerHTML = "";
-    sel.appendChild(first);
-    rest.forEach(o => sel.appendChild(o));
-    sel.selectedIndex = 0;
-  });
+  const wordNames = ["Budget","Forecast","KPI","Supplier","Lead Time"];
 
   const quill = new Quill('#editor', {
     theme: 'snow',
-    modules: { toolbar: [['bold','italic','underline'],[{ list: 'ordered' }, { list: 'bullet' }],[{ align: [] }],['clean']] }
+    modules: { toolbar: [['bold','italic','underline'],[{ list: 'ordered' }, { list: 'bullet' }],['clean']] }
   });
-  quill.root.addEventListener('paste', e => e.preventDefault());
-  quill.root.style.webkitUserSelect = 'text';
-  quill.root.style.userSelect = 'text';
 
-  document.getElementById("startBtn").onclick = () => {
-    const nameInput = document.getElementById("studentName").value.trim();
-    const emailInput = document.getElementById("studentEmail").value.trim();
+  function startTimer() {
+    timer = setInterval(() => {
+      timeLeft--;
+      const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+      timerDisplay.textContent = `Time Remaining: ${m}:${s.toString().padStart(2,"0")}`;
+      if (timeLeft <= 0) { clearInterval(timer); submitExam(); }
+    }, 1000);
+  }
+
+  function enableFullScreen() {
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen();
+      document.addEventListener("fullscreenchange", () => {
+        if (!document.fullscreenElement) {
+          alert("Exam terminated. Fullscreen required.");
+          location.reload();
+        }
+      });
+    }
+  }
+
+  // ✅ START BUTTON FIX
+  startBtn.addEventListener("click", () => {
+    const name = document.getElementById("studentName").value.trim();
+    const email = document.getElementById("studentEmail").value.trim();
     const code = document.getElementById("classCode").value.trim();
-    if (!nameInput || !emailInput) { alert("Please enter your name and email before starting."); return; }
-    if (code !== "MDO2G3") { alert("Invalid class code."); return; }
 
-    document.getElementById("studentNameField").value = nameInput;
-    document.getElementById("studentEmailField").value = emailInput;
+    if (!name || !email) return alert("Please fill in your details.");
+    if (code !== "MDO2G3") return alert("Invalid class code.");
+
+    document.getElementById("studentNameField").value = name;
+    document.getElementById("studentEmailField").value = email;
     document.getElementById("classCodeField").value = code;
 
-    login.style.display = "none";
-    exam.style.display = "block";
+    login.classList.remove("active");
+    exam.classList.add("active");
     partA.classList.add("active");
-    partB.classList.remove("active");
     enableFullScreen();
     startTimer();
-  };
+  });
 
-  document.getElementById("toPartB").addEventListener("click", () => {
+  toPartB.addEventListener("click", () => {
     partA.classList.remove("active");
     partB.classList.add("active");
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
-  document.getElementById("toPartA").addEventListener("click", () => {
+  toPartA.addEventListener("click", () => {
     partB.classList.remove("active");
     partA.classList.add("active");
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   form.addEventListener("submit", e => {
@@ -235,67 +202,59 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function submitExam() {
-    clearInterval(timerInt);
+    clearInterval(timer);
     const fd = new FormData(form);
     const name = fd.get("studentName") || document.getElementById("studentNameField").value;
     const email = fd.get("studentEmail") || document.getElementById("studentEmailField").value;
     const minutesUsed = 40 - Math.floor(timeLeft / 60);
+    const emailHtml = quill.root.innerHTML.trim();
+
     let score = 0;
     const rows = [];
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 5; i++) {
       const sel = fd.get("q" + i) || "No answer";
       const corr = correctAnswers["q" + i];
       const ok = sel === corr;
       if (ok) score++;
       rows.push({ word: wordNames[i-1], sel, corr, ok });
     }
-    const emailHtml = quill.root.innerHTML.replace(/<p><br><\/p>/g, "").trim();
-    const partATable = `
-      <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:10px;">
-        <thead><tr style="background:#004080;color:#fff;text-align:left;">
-          <th style="padding:8px;border:1px solid #ccc;">Word</th>
-          <th style="padding:8px;border:1px solid #ccc;">Student Answer</th>
-          <th style="padding:8px;border:1px solid #ccc;">Result</th></tr></thead>
-        <tbody>${rows.map(r=>`
-          <tr><td style="padding:8px;border:1px solid #ccc;">${r.word}</td>
-          <td style="padding:8px;border:1px solid #ccc;">${r.sel}</td>
-          <td style="padding:8px;border:1px solid #ccc;color:${r.ok?'green':'#b00'};">${r.ok?'✅ Correct':`❌ Incorrect → Correct answer: ${r.corr}`}</td></tr>`).join("")}
-        </tbody>
-      </table>`;
-    const htmlReport = `
-      <h2 style="color:#004080;">English Exam – Business Resources – ${name} (MDO2G3)</h2>
-      <p><b>Student Name:</b> ${name}<br><b>Student Email:</b> ${email}<br><b>Class Code:</b> MDO2G3<br><b>Time Taken:</b> ${minutesUsed} min</p><hr>
-      <h3 style="color:#004080;">Part A – Vocabulary Matching</h3>${partATable}<p><b>Part A Score:</b> ${score}/10</p><hr>
-      <h3 style="color:#004080;">Part B – Email Writing & Instructor Feedback</h3>
-      <p><b>Student’s Response:</b></p>
-      <div style="border:1px solid #ccc;border-radius:6px;padding:12px;margin-bottom:15px;background:#f9f9f9;">${emailHtml || "<em>(No content)</em>"}</div>
-      <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:10px;">
-        <thead><tr style="background:#004080;color:#fff;text-align:left;">
-          <th style="padding:8px;border:1px solid #ccc;">Criterion</th>
-          <th style="padding:8px;border:1px solid #ccc;">Maximum Score</th>
-          <th style="padding:8px;border:1px solid #ccc;">Score Awarded</th></tr></thead>
-        <tbody>
-          <tr><td style="padding:8px;border:1px solid #ccc;">Vocabulary Use</td><td style="padding:8px;border:1px solid #ccc;">/3</td><td style="padding:8px;border:1px solid #ccc;">___ / 3</td></tr>
-          <tr><td style="padding:8px;border:1px solid #ccc;">Structure & Clarity</td><td style="padding:8px;border:1px solid #ccc;">/3</td><td style="padding:8px;border:1px solid #ccc;">___ / 3</td></tr>
-          <tr><td style="padding:8px;border:1px solid #ccc;">Language Accuracy & Tone</td><td style="padding:8px;border:1px solid #ccc;">/2</td><td style="padding:8px;border:1px solid #ccc;">___ / 2</td></tr>
-          <tr><td style="padding:8px;border:1px solid #ccc;">Professional Style</td><td style="padding:8px;border:1px solid #ccc;">/2</td><td style="padding:8px;border:1px solid #ccc;">___ / 2</td></tr>
-        </tbody></table>
-       <br>
-  <p><b>Instructor Comments:</b></p>
-  <p style="border:1px solid #ccc;padding:10px;border-radius:6px;min-height:50px;background:#fdfdfd;">
-    [Type feedback here]
-  </p>
 
-  <h4 style="color:#004080;">Score Summary</h4>
-  <table style="border-collapse:collapse;width:100%;max-width:460px;font-size:15px;">
-    <tr><td style="padding:8px;border:1px solid #ccc;">Part A Score</td><td style="padding:8px;border:1px solid #ccc;">${score} / 10</td></tr>
-    <tr><td style="padding:8px;border:1px solid #ccc;">Part B Score</td><td style="padding:8px;border:1px solid #ccc;">___ / 10</td></tr>
-    <tr><td style="padding:8px;border:1px solid #ccc;"><b>Final Note</b></td><td style="padding:8px;border:1px solid #ccc;"><b>___ / 20</b></td></tr>
-  </table>
-      <div style="border-top:1px solid #ccc;margin-top:20px;padding-top:10px;font-size:13px;"><em>This report was generated automatically for the English Exam – Business Resources.</em></div>`;
-    emailjs.send("service_opm4h6b","template_r0u784p",{from_name:name,from_email:email,subject:`${name} – English Exam – Business Resources (MDO2G3)`,message_html:htmlReport})
-    .then(()=>{alert("✅ Exam submitted successfully. You may close this window.");document.getElementById("exam").style.display="none";})
-    .catch(err=>{alert("❌ Error sending exam: " + err.text);console.error("EmailJS Error:",err);});
+    const htmlReport = `
+    <h2 style="color:#004080;">English Exam – ${name}</h2>
+    <p><b>Student:</b> ${name}<br><b>Email:</b> ${email}<br><b>Time Used:</b> ${minutesUsed} min</p>
+    <hr>
+    <h3>Part A – Vocabulary</h3>
+    <table style="border-collapse:collapse;width:100%;">
+    ${rows.map(r=>`
+      <tr>
+        <td style="border:1px solid #ccc;padding:5px;">${r.word}</td>
+        <td style="border:1px solid #ccc;padding:5px;">${r.sel}</td>
+        <td style="border:1px solid #ccc;padding:5px;color:${r.ok?'green':'red'};">${r.ok?'✅':'❌'} ${r.ok?'':'→ '+r.corr}</td>
+      </tr>`).join("")}
+    </table>
+    <p><b>Part A Score:</b> ${score}/5</p>
+    <hr>
+    <h3>Part B – Student Response</h3>
+    <div style="border:1px solid #ccc;padding:10px;border-radius:6px;background:#f9f9f9;">${emailHtml}</div>
+    <p><b>Instructor Comments:</b></p>
+    <p style="border:1px solid #ccc;padding:10px;border-radius:6px;background:#fdfdfd;">[Type feedback here]</p>
+    <p><b>Final Score:</b> ___ / 20</p>`;
+
+    if (window.emailjs) {
+      emailjs.send("service_opm4h6b","template_r0u784p",{
+        from_name:name,
+        from_email:email,
+        subject:`${name} – English Exam – Business Resources (MDO2G3)`,
+        message_html:htmlReport
+      }).then(()=>{
+        alert("✅ Exam submitted successfully.");
+        exam.style.display = "none";
+      }).catch(err=>{
+        alert("❌ Error sending exam: "+err.text);
+      });
+    } else {
+      alert("EmailJS not loaded; submission simulated.");
+    }
   }
 });
 </script>
