@@ -23,32 +23,72 @@
   header {
     background: linear-gradient(135deg, #004080, #0066cc);
     color: white;
-    padding: 20px;
+    padding: 25px 20px;
     text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   }
 
-  header h1 { margin: 0; font-size: 1.8em; }
-  #timer { font-weight: bold; margin-top: 5px; }
+  header h1 { margin: 0; font-size: 1.9em; letter-spacing: 0.4px; }
+  #timer { font-weight: bold; margin-top: 10px; }
 
   main {
     max-width: 900px;
-    margin: 30px auto;
+    margin: 40px auto;
     background: white;
     border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    padding: 30px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    padding: 40px;
   }
 
-  #login, #exam, #partA, #partB { display: none; }
-  #login.active, #exam.active, #partA.active, #partB.active { display: block; }
+  /* Centered login */
+  #login {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 160px);
+    text-align: center;
+  }
 
-  input, select {
-    width: 100%;
-    padding: 8px;
-    margin-top: 6px;
-    margin-bottom: 14px;
+  #login h2 {
+    color: #004080;
+    margin-top: 0;
+  }
+
+  #login input {
+    width: 80%;
+    padding: 10px;
+    margin: 8px 0;
     border-radius: 6px;
     border: 1px solid #ccc;
+    font-size: 16px;
+  }
+
+  #login button {
+    margin-top: 10px;
+    background: #004080;
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  #login button:hover { background: #003366; }
+
+  #exam, #partA, #partB { display: none; }
+  #exam.active, #partA.active, #partB.active { display: block; }
+
+  select {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    white-space: normal;
+    word-wrap: break-word;
+    max-width: 100%;
   }
 
   button {
@@ -68,11 +108,21 @@
     border: 1px solid #e3e6ee;
     border-radius: 8px;
     overflow: hidden;
+    min-height: 300px;
   }
 
-  .ql-toolbar.ql-snow { background: #f4f7fc; border: none; border-bottom: 1px solid #ccc; }
-  .ql-container.ql-snow { border: none; min-height: 250px; }
+  .ql-toolbar.ql-snow {
+    background: #f4f7fc;
+    border: none;
+    border-bottom: 1px solid #ccc;
+  }
 
+  .ql-container.ql-snow {
+    border: none;
+    height: 300px;
+    min-height: 300px;
+    cursor: text;
+  }
 </style>
 </head>
 
@@ -83,16 +133,13 @@
 </header>
 
 <main>
-  <!-- Login Screen -->
+  <!-- Centered Login Screen -->
   <section id="login" class="active">
     <h2>Start Exam</h2>
     <p>Enter your details to begin. Once started, you will have <b>40 minutes</b>.</p>
-    <label>Name:</label>
-    <input type="text" id="studentName" required>
-    <label>Email:</label>
-    <input type="email" id="studentEmail" required>
-    <label>Class Code:</label>
-    <input type="text" id="classCode" required>
+    <input type="text" id="studentName" placeholder="Full Name" required>
+    <input type="email" id="studentEmail" placeholder="Email" required>
+    <input type="text" id="classCode" placeholder="Class Code (MDO2G3)" required>
     <button id="startBtn">Start Exam</button>
   </section>
 
@@ -110,32 +157,75 @@
           <li>Budget<select name="q1">
             <option value="">-- Choose --</option>
             <option>A plan for how money will be spent during a specific period.</option>
+            <option>The time between ordering and receiving something.</option>
             <option>The goods and materials a company holds.</option>
             <option>A company providing goods or services to another.</option>
-            <option>The time between ordering and receiving something.</option>
           </select></li>
           <li>Forecast<select name="q2">
             <option value="">-- Choose --</option>
             <option>A prediction of future sales, costs, or results.</option>
             <option>Ongoing expenses not tied to one product or service.</option>
             <option>Financial gain or loss compared to cost.</option>
+            <option>Number of employees in a department.</option>
           </select></li>
           <li>KPI<select name="q3">
             <option value="">-- Choose --</option>
             <option>A measurable value showing how effectively goals are achieved.</option>
             <option>A plan for money spending.</option>
+            <option>The time between order and delivery.</option>
+            <option>A prediction of sales.</option>
           </select></li>
           <li>Supplier<select name="q4">
             <option value="">-- Choose --</option>
             <option>A company providing goods or services to another.</option>
             <option>Expenses not linked to a product.</option>
+            <option>The financial return on investment.</option>
+            <option>A staff member giving feedback.</option>
           </select></li>
           <li>Lead Time<select name="q5">
             <option value="">-- Choose --</option>
             <option>The time between ordering and receiving something.</option>
             <option>Extra costs of running a business.</option>
+            <option>Number of employees.</option>
+            <option>A business sustainability report.</option>
+          </select></li>
+          <li>Inventory<select name="q6">
+            <option value="">-- Choose --</option>
+            <option>The goods and materials a company holds.</option>
+            <option>The expected revenue.</option>
+            <option>The time between orders.</option>
+            <option>Company overhead costs.</option>
+          </select></li>
+          <li>Overhead<select name="q7">
+            <option value="">-- Choose --</option>
+            <option>Ongoing expenses not tied to one product or service.</option>
+            <option>A plan for company goals.</option>
+            <option>The delivery delay period.</option>
+            <option>The total sales revenue.</option>
+          </select></li>
+          <li>Sustainability<select name="q8">
+            <option value="">-- Choose --</option>
+            <option>Managing resources for long-term balance.</option>
+            <option>The company’s annual sales.</option>
+            <option>A measurable performance indicator.</option>
+            <option>Stock of materials.</option>
+          </select></li>
+          <li>ROI<select name="q9">
+            <option value="">-- Choose --</option>
+            <option>Financial gain or loss compared to cost of investment.</option>
+            <option>Total operating expenses.</option>
+            <option>Employee satisfaction level.</option>
+            <option>Plan for spending.</option>
+          </select></li>
+          <li>Headcount<select name="q10">
+            <option value="">-- Choose --</option>
+            <option>Number of employees in a company or department.</option>
+            <option>Amount of raw materials held.</option>
+            <option>Prediction of future costs.</option>
+            <option>Profit after expenses.</option>
           </select></li>
         </ol>
+
         <div class="btn-row">
           <button type="button" id="toPartB">Next → Part B</button>
         </div>
@@ -186,15 +276,22 @@ const correctAnswers = {
   q2:"A prediction of future sales, costs, or results.",
   q3:"A measurable value showing how effectively goals are achieved.",
   q4:"A company providing goods or services to another.",
-  q5:"The time between ordering and receiving something."
+  q5:"The time between ordering and receiving something.",
+  q6:"The goods and materials a company holds.",
+  q7:"Ongoing expenses not tied to one product or service.",
+  q8:"Managing resources for long-term balance.",
+  q9:"Financial gain or loss compared to cost of investment.",
+  q10:"Number of employees in a company or department."
 };
 
-const wordNames = ["Budget","Forecast","KPI","Supplier","Lead Time"];
+const wordNames = ["Budget","Forecast","KPI","Supplier","Lead Time","Inventory","Overhead","Sustainability","ROI","Headcount"];
 
 const quill = new Quill('#editor', {
   theme: 'snow',
   modules: { toolbar: [['bold','italic','underline'],[{ list: 'ordered' }, { list: 'bullet' }],['clean']] }
 });
+quill.root.style.height = "300px";
+quill.root.style.cursor = "text";
 
 function startTimer() {
   timer = setInterval(() => {
@@ -258,7 +355,7 @@ function submitExam() {
 
   let score = 0;
   const rows = [];
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 10; i++) {
     const sel = fd.get("q" + i) || "No answer";
     const corr = correctAnswers["q" + i];
     const ok = sel === corr;
@@ -279,7 +376,7 @@ function submitExam() {
       <td style="border:1px solid #ccc;padding:5px;color:${r.ok?'green':'red'};">${r.ok?'✅':'❌'} ${r.ok?'':'→ '+r.corr}</td>
     </tr>`).join("")}
   </table>
-  <p><b>Part A Score:</b> ${score}/5</p>
+  <p><b>Part A Score:</b> ${score}/10</p>
   <hr>
   <h3>Part B – Student Response</h3>
   <div style="border:1px solid #ccc;padding:10px;border-radius:6px;background:#f9f9f9;">${emailHtml}</div>
