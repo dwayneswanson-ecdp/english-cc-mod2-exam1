@@ -42,7 +42,7 @@
     background: #fff;
     padding: 40px;
     border-radius: 12px;
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
   }
 
   /* Center login card */
@@ -74,7 +74,7 @@
   button {
     background:#004080; color:#fff; border:none; padding:12px 28px; border-radius:6px; cursor:pointer; font-size:16px;
   }
-  button:hover { background:#003366; }
+  button:hover { background:#003666; }
 
   .btn-row { display:flex; gap:12px; flex-wrap: wrap; margin-top: 16px; }
   .btn-row.right { justify-content: flex-end; }
@@ -117,7 +117,7 @@
     <label>Class Code:</label><input type="text" id="classCode" required>
 
     <div class="btn-row" style="justify-content:center;">
-      <button id="startBtn">Start Exam</button>
+      <button id="startBtn" type="button">Start Exam</button>
     </div>
   </section>
 
@@ -266,16 +266,21 @@ document.addEventListener("DOMContentLoaded", function() {
   // Init EmailJS
   if (window.emailjs) { emailjs.init("Bb0oPYBiZGQcyIz5r"); }
 
-  // Grab elements
+  // Grab elements (guard just in case)
   const login = document.getElementById("login");
-  const exam = document.getElementById("exam");
+  const exam  = document.getElementById("exam");
   const startBtn = document.getElementById("startBtn");
-  const toPartA = document.getElementById("toPartA");
-  const toPartB = document.getElementById("toPartB");
+  const toPartA  = document.getElementById("toPartA");
+  const toPartB  = document.getElementById("toPartB");
   const partA = document.getElementById("partA");
   const partB = document.getElementById("partB");
   const timerDisplay = document.getElementById("timer");
   const form = document.getElementById("examForm");
+
+  if (!login || !exam || !startBtn || !partA || !partB || !form) {
+    console.error("Missing required DOM nodes. Check IDs.");
+    return;
+  }
 
   // Timer
   let timeLeft = 40 * 60;
@@ -297,19 +302,23 @@ document.addEventListener("DOMContentLoaded", function() {
 
   const wordNames = ["Budget","Forecast","KPI","Supplier","Lead Time","Inventory","Overhead","Sustainability","ROI","Headcount"];
 
-  // Quill editor
-  const quill = new Quill('#editor', {
-    theme: 'snow',
-    modules: {
-      toolbar: [
-        ['bold','italic','underline'],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        ['clean']
-      ]
+  // Lazy-initialize Quill (prevents early crashes that block the Start handler)
+  let quill = null;
+  function ensureQuill() {
+    if (!quill) {
+      quill = new Quill('#editor', {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            ['bold','italic','underline'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['clean']
+          ]
+        }
+      });
     }
-  });
+  }
 
-  // Helpers
   function startTimer() {
     timer = setInterval(() => {
       timeLeft--;
@@ -320,20 +329,21 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   function enableFullScreen() {
-    document.documentElement.requestFullscreen?.();
-    document.addEventListener("fullscreenchange", () => {
-      if (!document.fullscreenElement) {
-        alert("Exam terminated. Fullscreen required.");
-        location.reload();
-      }
-    });
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(()=>{});
+      document.addEventListener("fullscreenchange", () => {
+        if (!document.fullscreenElement) {
+          alert("Exam terminated. Fullscreen required.");
+          location.reload();
+        }
+      });
+    }
   }
 
   function randomizeSelectsKeepFirst() {
     document.querySelectorAll("#partA select").forEach(sel => {
       const opts = Array.from(sel.options);
       const first = opts.shift(); // remove "-- Choose --"
-      // Shuffle remaining
       for (let i = opts.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [opts[i].text, opts[j].text] = [opts[j].text, opts[i].text];
@@ -345,14 +355,14 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // Start button
+  // START button
   startBtn.addEventListener("click", () => {
-    const name = document.getElementById("studentName").value.trim();
-    const email = document.getElementById("studentEmail").value.trim();
-    const code = document.getElementById("classCode").value.trim();
+    const name  = (document.getElementById("studentName").value || "").trim();
+    const email = (document.getElementById("studentEmail").value || "").trim();
+    const code  = (document.getElementById("classCode").value || "").trim();
 
-    if (!name || !email) return alert("Please fill in your details.");
-    if (code !== "MDO2G3") return alert("Invalid class code.");
+    if (!name || !email) { alert("Please fill in your details."); return; }
+    if (code !== "MDO2G3") { alert("Invalid class code."); return; }
 
     document.getElementById("studentNameField").value = name;
     document.getElementById("studentEmailField").value = email;
@@ -360,7 +370,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Show exam
     login.style.display = "none";
-    exam.style.display = "block";
+    exam.style.display  = "block";
     partA.classList.add("active");
     partB.classList.remove("active");
 
@@ -374,6 +384,7 @@ document.addEventListener("DOMContentLoaded", function() {
   toPartB.addEventListener("click", () => {
     partA.classList.remove("active");
     partB.classList.add("active");
+    ensureQuill(); // init Quill only when needed
   });
   toPartA.addEventListener("click", () => {
     partB.classList.remove("active");
@@ -386,158 +397,138 @@ document.addEventListener("DOMContentLoaded", function() {
     submitExam();
   });
 
-function submitExam() {
-  clearInterval(timer);
+  function submitExam() {
+    clearInterval(timer);
 
-  const fd = new FormData(form);
-  const name  = fd.get("studentName")  || document.getElementById("studentNameField").value;
-  const email = fd.get("studentEmail") || document.getElementById("studentEmailField").value;
-  const minutesUsed = 40 - Math.floor(timeLeft / 60);
+    const fd = new FormData(form);
+    const name  = fd.get("studentName")  || document.getElementById("studentNameField").value;
+    const email = fd.get("studentEmail") || document.getElementById("studentEmailField").value;
+    const minutesUsed = 40 - Math.floor(timeLeft / 60);
 
-  // Pull the rich-text answer from Quill (Part B)
-  const emailHtml = (window.quill ? quill.root.innerHTML.trim() : (fd.get("emailBody") || ""));
+    const emailHtml = quill ? quill.root.innerHTML.trim() : "<em>(No response)</em>";
 
-  // Detect how many questions are on the page (works for 5 or 10)
-  const totalQs = document.querySelectorAll('select[name^="q"]').length || 10;
+    const totalQs = document.querySelectorAll('#partA select[name^="q"]').length || 10;
 
-  // Words in order (we’ll slice to totalQs)
-  const wordNamesAll = ["Budget","Forecast","KPI","Supplier","Lead Time","Inventory","Overhead","Sustainability","ROI","Headcount"];
-  const wordNames = wordNamesAll.slice(0, totalQs);
+    let scoreA = 0;
+    let partARowsHTML = "";
+    for (let i = 1; i <= totalQs; i++) {
+      const sel  = fd.get("q" + i) || "No answer";
+      const corr = correctAnswers["q" + i] || "";
+      const ok   = sel === corr;
+      if (ok) scoreA++;
+      const mark = ok ? "✅ Correct" : `❌ Incorrect → Correct answer: ${corr}`;
+      partARowsHTML += `
+        <tr>
+          <td style="padding:8px;border:1px solid #ccc;">${wordNames[i-1] || ("Q"+i)}</td>
+          <td style="padding:8px;border:1px solid #ccc;">${sel}</td>
+          <td style="padding:8px;border:1px solid #ccc;color:${ok ? 'green' : '#b00'};">${mark}</td>
+        </tr>`;
+    }
 
-  // Correct answers (ensure you have entries for however many questions you render)
-  const correctAnswersFull = {
-    q1: "A plan for how money will be spent during a specific period.",
-    q2: "A prediction of future sales, costs, or results.",
-    q3: "A measurable value showing how effectively goals are achieved.",
-    q4: "A company providing goods or services to another.",
-    q5: "The time between ordering and receiving something.",
-    q6: "The goods and materials a company holds.",
-    q7: "Ongoing expenses not tied to one product or service.",
-    q8: "Managing resources for long-term balance.",
-    q9: "Financial gain or loss compared to cost of investment.",
-    q10:"Number of employees in a company or department."
-  };
+    const partBScore = "___ / 10";
+    const finalNote  = "___ / 20";
+    const instructorCommentsPlaceholder = "[Type feedback here]";
 
-  let scoreA = 0;
-  const partARowsHTML = Array.from({ length: totalQs }, (_, idx) => {
-    const i = idx + 1;
-    const sel  = fd.get("q" + i) || "No answer";
-    const corr = correctAnswersFull["q" + i] || "";
-    const ok   = sel === corr;
-    if (ok) scoreA++;
-    const mark = ok ? "✅ Correct" : `❌ Incorrect → Correct answer: ${corr}`;
-    return `
-      <tr>
-        <td style="padding:8px;border:1px solid #ccc;">${wordNames[idx] || ("Q" + i)}</td>
-        <td style="padding:8px;border:1px solid #ccc;">${sel}</td>
-        <td style="padding:8px;border:1px solid #ccc;color:${ok ? 'green' : '#b00'};">${mark}</td>
-      </tr>`;
-  }).join("");
+    const htmlReport = `
+      <h2 style="color:#004080;margin:0 0 8px 0;">English Exam – Business Resources – ${name} (MDO2G3)</h2>
+      <table style="border-collapse:collapse;width:100%;max-width:640px;font-size:14px;margin:0 0 12px 0;">
+        <tr><td style="padding:4px 0;"><b>Student Name:</b> ${name}</td></tr>
+        <tr><td style="padding:4px 0;"><b>Student Email:</b> ${email}</td></tr>
+        <tr><td style="padding:4px 0;"><b>Class Code:</b> MDO2G3</td></tr>
+        <tr><td style="padding:4px 0;"><b>Time Taken:</b> ${minutesUsed} min</td></tr>
+      </table>
+      <hr style="border:none;border-top:1px solid #ddd;margin:14px 0;">
 
-  // If you don’t want auto-grading for Part B, leave placeholders:
-  const partBScore = "___ / 10";
-  const finalNote  = "___ / 20";
-  const instructorCommentsPlaceholder = "[Type feedback here]";
+      <h3 style="color:#004080;margin:10px 0 8px 0;">Part A – Vocabulary Matching</h3>
+      <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:8px;">
+        <thead>
+          <tr style="background:#004080;color:#fff;text-align:left;">
+            <th style="padding:8px;border:1px solid #ccc;">Word</th>
+            <th style="padding:8px;border:1px solid #ccc;">Student Answer</th>
+            <th style="padding:8px;border:1px solid #ccc;">Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${partARowsHTML}
+        </tbody>
+      </table>
+      <p style="margin:10px 0 0 0;"><b>Part A Score:</b> ${scoreA} / ${totalQs}</p>
 
-  // Build the HTML report (mail-client friendly inline styles)
-  const htmlReport = `
-    <h2 style="color:#004080;margin:0 0 8px 0;">English Exam – Business Resources – ${name} (MDO2G3)</h2>
-    <table style="border-collapse:collapse;width:100%;max-width:640px;font-size:14px;margin:0 0 12px 0;">
-      <tr><td style="padding:4px 0;"><b>Student Name:</b> ${name}</td></tr>
-      <tr><td style="padding:4px 0;"><b>Student Email:</b> ${email}</td></tr>
-      <tr><td style="padding:4px 0;"><b>Class Code:</b> MDO2G3</td></tr>
-      <tr><td style="padding:4px 0;"><b>Time Taken:</b> ${minutesUsed} min</td></tr>
-    </table>
-    <hr style="border:none;border-top:1px solid #ddd;margin:14px 0;">
+      <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
 
-    <h3 style="color:#004080;margin:10px 0 8px 0;">Part A – Vocabulary Matching</h3>
-    <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:8px;">
-      <thead>
-        <tr style="background:#004080;color:#fff;text-align:left;">
-          <th style="padding:8px;border:1px solid #ccc;">Word</th>
-          <th style="padding:8px;border:1px solid #ccc;">Student Answer</th>
-          <th style="padding:8px;border:1px solid #ccc;">Result</th>
+      <h3 style="color:#004080;margin:10px 0 8px 0;">Part B – Student Response</h3>
+      <div style="border:1px solid #ccc;border-radius:6px;padding:10px;background:#f9f9f9;">
+        ${emailHtml}
+      </div>
+      <p style="margin:10px 0 0 0;"><b>Part B Score:</b> ${partBScore}</p>
+
+      <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
+
+      <h3 style="color:#004080;margin:10px 0 8px 0;">Instructor Feedback & Final Scores</h3>
+      <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:6px;">
+        <thead>
+          <tr style="background:#004080;color:#fff;text-align:left;">
+            <th style="padding:8px;border:1px solid #ccc;">Criterion</th>
+            <th style="padding:8px;border:1px solid #ccc;">Maximum</th>
+            <th style="padding:8px;border:1px solid #ccc;">Awarded</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:8px;border:1px solid #ccc;">Vocabulary Use</td><td style="padding:8px;border:1px solid #ccc;">/3</td><td style="padding:8px;border:1px solid #ccc;">___ / 3</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ccc;">Structure & Clarity</td><td style="padding:8px;border:1px solid #ccc;">/3</td><td style="padding:8px;border:1px solid #ccc;">___ / 3</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ccc;">Language Accuracy & Tone</td><td style="padding:8px;border:1px solid #ccc;">/2</td><td style="padding:8px;border:1px solid #ccc;">___ / 2</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ccc;">Professional Style</td><td style="padding:8px;border:1px solid #ccc;">/2</td><td style="padding:8px;border:1px solid #ccc;">___ / 2</td></tr>
+        </tbody>
+      </table>
+
+      <p style="margin:12px 0 6px 0;"><b>Instructor Comments:</b></p>
+      <div style="border:1px solid #ccc;border-radius:6px;padding:10px;background:#fdfdfd;min-height:48px;">
+        [Type feedback here]
+      </div>
+
+      <h4 style="color:#004080;margin:14px 0 6px 0;">Score Summary</h4>
+      <table style="border-collapse:collapse;width:100%;max-width:460px;font-size:15px;">
+        <tr>
+          <td style="padding:8px;border:1px solid #ccc;">Part A Score</td>
+          <td style="padding:8px;border:1px solid #ccc;">${scoreA} / ${totalQs}</td>
         </tr>
-      </thead>
-      <tbody>
-        ${partARowsHTML}
-      </tbody>
-    </table>
-    <p style="margin:10px 0 0 0;"><b>Part A Score:</b> ${scoreA} / ${totalQs}</p>
-
-    <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
-
-    <h3 style="color:#004080;margin:10px 0 8px 0;">Part B – Student Response</h3>
-    <div style="border:1px solid #ccc;border-radius:6px;padding:10px;background:#f9f9f9;">
-      ${emailHtml || "<em>(No response)</em>"}
-    </div>
-    <p style="margin:10px 0 0 0;"><b>Part B Score:</b> ${partBScore}</p>
-
-    <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
-
-    <h3 style="color:#004080;margin:10px 0 8px 0;">Instructor Feedback & Final Scores</h3>
-
-    <!-- Optional rubric (keep if you like it) -->
-    <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:6px;">
-      <thead>
-        <tr style="background:#004080;color:#fff;text-align:left;">
-          <th style="padding:8px;border:1px solid #ccc;">Criterion</th>
-          <th style="padding:8px;border:1px solid #ccc;">Maximum</th>
-          <th style="padding:8px;border:1px solid #ccc;">Awarded</th>
+        <tr>
+          <td style="padding:8px;border:1px solid #ccc;">Part B Score</td>
+          <td style="padding:8px;border:1px solid #ccc;">${partBScore}</td>
         </tr>
-      </thead>
-      <tbody>
-        <tr><td style="padding:8px;border:1px solid #ccc;">Vocabulary Use</td><td style="padding:8px;border:1px solid #ccc;">/3</td><td style="padding:8px;border:1px solid #ccc;">___ / 3</td></tr>
-        <tr><td style="padding:8px;border:1px solid #ccc;">Structure & Clarity</td><td style="padding:8px;border:1px solid #ccc;">/3</td><td style="padding:8px;border:1px solid #ccc;">___ / 3</td></tr>
-        <tr><td style="padding:8px;border:1px solid #ccc;">Language Accuracy & Tone</td><td style="padding:8px;border:1px solid #ccc;">/2</td><td style="padding:8px;border:1px solid #ccc;">___ / 2</td></tr>
-        <tr><td style="padding:8px;border:1px solid #ccc;">Professional Style</td><td style="padding:8px;border:1px solid #ccc;">/2</td><td style="padding:8px;border:1px solid #ccc;">___ / 2</td></tr>
-      </tbody>
-    </table>
+        <tr>
+          <td style="padding:8px;border:1px solid #ccc;"><b>Final Note</b></td>
+          <td style="padding:8px;border:1px solid #ccc;"><b>${finalNote}</b></td>
+        </tr>
+      </table>
 
-    <p style="margin:12px 0 6px 0;"><b>Instructor Comments:</b></p>
-    <div style="border:1px solid #ccc;border-radius:6px;padding:10px;background:#fdfdfd;min-height:48px;">
-      ${instructorCommentsPlaceholder}
-    </div>
+      <div style="border-top:1px solid #ccc;margin-top:16px;padding-top:8px;font-size:12px;color:#555;">
+        <em>This report was generated automatically for the English Exam – Business Resources.</em>
+      </div>
+    `;
 
-    <h4 style="color:#004080;margin:14px 0 6px 0;">Score Summary</h4>
-    <table style="border-collapse:collapse;width:100%;max-width:460px;font-size:15px;">
-      <tr>
-        <td style="padding:8px;border:1px solid #ccc;">Part A Score</td>
-        <td style="padding:8px;border:1px solid #ccc;">${scoreA} / ${totalQs}</td>
-      </tr>
-      <tr>
-        <td style="padding:8px;border:1px solid #ccc;">Part B Score</td>
-        <td style="padding:8px;border:1px solid #ccc;">${partBScore}</td>
-      </tr>
-      <tr>
-        <td style="padding:8px;border:1px solid #ccc;"><b>Final Note</b></td>
-        <td style="padding:8px;border:1px solid #ccc;"><b>${finalNote}</b></td>
-      </tr>
-    </table>
+    const subject = `${name} – English Exam – Business Resources (MDO2G3)`;
 
-    <div style="border-top:1px solid #ccc;margin-top:16px;padding-top:8px;font-size:12px;color:#555;">
-      <em>This report was generated automatically for the English Exam – Business Resources.</em>
-    </div>
-  `;
-
-  // Subject line with student name
-  const subject = `${name} – English Exam – Business Resources (MDO2G3)`;
-
-  emailjs.send("service_opm4h6b", "template_r0u784p", {
-    from_name: name,
-    from_email: email,
-    subject,
-    message_html: htmlReport
-  })
-  .then(() => {
-    alert("✅ Exam submitted successfully.");
-    document.getElementById("exam").style.display = "none";
-  })
-  .catch(err => {
-    alert("❌ Error sending exam: " + (err && err.text ? err.text : err));
-    console.error("EmailJS Error:", err);
-  });
-}
+    if (window.emailjs) {
+      emailjs.send("service_opm4h6b", "template_r0u784p", {
+        from_name: name,
+        from_email: email,
+        subject,
+        message_html: htmlReport
+      })
+      .then(() => {
+        alert("✅ Exam submitted successfully.");
+        exam.style.display = "none";
+      })
+      .catch(err => {
+        alert("❌ Error sending exam: " + (err && err.text ? err.text : err));
+        console.error("EmailJS Error:", err);
+      });
+    } else {
+      alert("EmailJS not loaded; submission simulated.");
+    }
+  }
+});
 </script>
 </body>
 </html>
