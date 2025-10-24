@@ -429,70 +429,85 @@ document.addEventListener("DOMContentLoaded", function() {
     const finalNote  = "___ / 20";
     const instructorCommentsPlaceholder = "[Type feedback here]";
 
- const htmlReport = `
-  <h2 style="color:#004080;margin:0 0 8px 0;">Results – English Exam – Business Resources – ${name} (MDO2G3)</h2>
-  <table style="border-collapse:collapse;width:100%;max-width:640px;font-size:14px;margin:0 0 12px 0;">
-    <tr><td style="padding:4px 0;"><b>Student Name:</b> ${name}</td></tr>
-    <tr><td style="padding:4px 0;"><b>Student Email:</b> ${email}</td></tr>
-    <tr><td style="padding:4px 0;"><b>Class Code:</b> MDO2G3</td></tr>
-    <tr><td style="padding:4px 0;"><b>Time Taken:</b> ${minutesUsed} min</td></tr>
-  </table>
+    const htmlReport = `
+      <h2 style="color:#004080;margin:0 0 8px 0;">English Exam – Business Resources – ${name} (MDO2G3)</h2>
+      <table style="border-collapse:collapse;width:100%;max-width:640px;font-size:14px;margin:0 0 12px 0;">
+        <tr><td style="padding:4px 0;"><b>Student Name:</b> ${name}</td></tr>
+        <tr><td style="padding:4px 0;"><b>Student Email:</b> ${email}</td></tr>
+        <tr><td style="padding:4px 0;"><b>Class Code:</b> MDO2G3</td></tr>
+        <tr><td style="padding:4px 0;"><b>Time Taken:</b> ${minutesUsed} min</td></tr>
+      </table>
+      <hr style="border:none;border-top:1px solid #ddd;margin:14px 0;">
 
-  <hr style="border:none;border-top:1px solid #ddd;margin:14px 0;">
+      <h3 style="color:#004080;margin:10px 0 8px 0;">Part A – Vocabulary Matching</h3>
+      <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:8px;">
+        <thead>
+          <tr style="background:#004080;color:#fff;text-align:left;">
+            <th style="padding:8px;border:1px solid #ccc;">Word</th>
+            <th style="padding:8px;border:1px solid #ccc;">Student Answer</th>
+            <th style="padding:8px;border:1px solid #ccc;">Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${partARowsHTML}
+        </tbody>
+      </table>
+      <p style="margin:10px 0 0 0;"><b>Part A Score:</b> ${scoreA} / ${totalQs}</p>
 
-  <!-- Part A -->
-  <h3 style="color:#004080;margin:10px 0 8px 0;">Part A – Vocabulary Matching</h3>
-  <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:8px;">
-    <thead>
-      <tr style="background:#004080;color:#fff;text-align:left;">
-        <th style="padding:8px;border:1px solid #ccc;">Word</th>
-        <th style="padding:8px;border:1px solid #ccc;">Student Answer</th>
-        <th style="padding:8px;border:1px solid #ccc;">Result</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${partARowsHTML}
-    </tbody>
-  </table>
-  <p style="margin:10px 0 0 0;"><b>Part A Score:</b> ${scoreA} / ${totalQs}</p>
+      <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
 
-  <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
+      <h3 style="color:#004080;margin:10px 0 8px 0;">Part B – Student Response</h3>
+      <div style="border:1px solid #ccc;border-radius:6px;padding:10px;background:#f9f9f9;">
+        ${emailHtml}
+      </div>
+      <p style="margin:10px 0 0 0;"><b>Part B Score:</b> ${partBScore}</p>
 
-  <!-- Part B -->
-  <h3 style="color:#004080;margin:10px 0 8px 0;">Part B – Written Exercise</h3>
-  <div style="border:1px solid #ccc;border-radius:6px;padding:10px;background:#f9f9f9;">
-    ${emailHtml}
-  </div>
+      <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
 
-  <p style="margin:12px 0 6px 0;"><b>Instructor Feedback:</b></p>
-  <div style="border:1px solid #ccc;border-radius:6px;padding:10px;background:#fdfdfd;min-height:48px;">
-    [Type feedback here]
-  </div>
+      <h3 style="color:#004080;margin:10px 0 8px 0;">Instructor Feedback & Final Scores</h3>
+      <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:6px;">
+        <thead>
+          <tr style="background:#004080;color:#fff;text-align:left;">
+            <th style="padding:8px;border:1px solid #ccc;">Criterion</th>
+            <th style="padding:8px;border:1px solid #ccc;">Maximum</th>
+            <th style="padding:8px;border:1px solid #ccc;">Awarded</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:8px;border:1px solid #ccc;">Vocabulary Use</td><td style="padding:8px;border:1px solid #ccc;">/3</td><td style="padding:8px;border:1px solid #ccc;">___ / 3</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ccc;">Structure & Clarity</td><td style="padding:8px;border:1px solid #ccc;">/3</td><td style="padding:8px;border:1px solid #ccc;">___ / 3</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ccc;">Language Accuracy & Tone</td><td style="padding:8px;border:1px solid #ccc;">/2</td><td style="padding:8px;border:1px solid #ccc;">___ / 2</td></tr>
+          <tr><td style="padding:8px;border:1px solid #ccc;">Professional Style</td><td style="padding:8px;border:1px solid #ccc;">/2</td><td style="padding:8px;border:1px solid #ccc;">___ / 2</td></tr>
+        </tbody>
+      </table>
 
-  <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
+      <p style="margin:12px 0 6px 0;"><b>Instructor Comments:</b></p>
+      <div style="border:1px solid #ccc;border-radius:6px;padding:10px;background:#fdfdfd;min-height:48px;">
+        [Type feedback here]
+      </div>
 
-  <!-- Part 3 -->
-  <h3 style="color:#004080;margin:10px 0 8px 0;">Part 3 – Final Score</h3>
-  <table style="border-collapse:collapse;width:100%;max-width:460px;font-size:15px;">
-    <tr>
-      <td style="padding:8px;border:1px solid #ccc;">Part A Score</td>
-      <td style="padding:8px;border:1px solid #ccc;">${scoreA} / ${totalQs}</td>
-    </tr>
-    <tr>
-      <td style="padding:8px;border:1px solid #ccc;">Part B Score</td>
-      <td style="padding:8px;border:1px solid #ccc;">___ / 10</td>
-    </tr>
-    <tr>
-      <td style="padding:8px;border:1px solid #ccc;"><b>Final Score</b></td>
-      <td style="padding:8px;border:1px solid #ccc;"><b>___ / 20</b></td>
-    </tr>
-  </table>
+      <h4 style="color:#004080;margin:14px 0 6px 0;">Score Summary</h4>
+      <table style="border-collapse:collapse;width:100%;max-width:460px;font-size:15px;">
+        <tr>
+          <td style="padding:8px;border:1px solid #ccc;">Part A Score</td>
+          <td style="padding:8px;border:1px solid #ccc;">${scoreA} / ${totalQs}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #ccc;">Part B Score</td>
+          <td style="padding:8px;border:1px solid #ccc;">${partBScore}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #ccc;"><b>Final Note</b></td>
+          <td style="padding:8px;border:1px solid #ccc;"><b>${finalNote}</b></td>
+        </tr>
+      </table>
 
-  <div style="border-top:1px solid #ccc;margin-top:16px;padding-top:8px;font-size:12px;color:#555;">
-    <em>This report was generated automatically for the English Exam – Business Resources.</em>
-  </div>
-`;
-    const subject = `${name} – English Exam Results – Business Resources (MDO2G3)`;
+      <div style="border-top:1px solid #ccc;margin-top:16px;padding-top:8px;font-size:12px;color:#555;">
+        <em>This report was generated automatically for the English Exam – Business Resources.</em>
+      </div>
+    `;
+
+    const subject = `${name} – English Exam – Business Resources (MDO2G3)`;
 
     if (window.emailjs) {
       emailjs.send("service_opm4h6b", "template_r0u784p", {
