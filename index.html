@@ -83,7 +83,21 @@
 
   ol { padding-left: 20px; }
   ol li { margin-bottom: 14px; }
-
+  
+/* Confirm card – same look as the login card */
+#confirm {
+  display: none;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  padding: 40px;
+  max-width: 520px;
+  margin: 40px auto;
+}
+#confirm h2 { color:#004080; margin-top:0; text-align:center; }
+#confirm table { width:100%; border-collapse:collapse; margin: 10px 0 0 0; }
+#confirm td { padding:8px 0; border-bottom:1px solid #eee; }
+  
   /* Two-page layout sections */
   #exam { display:none; }
   #partA, #partB { display:none; }
@@ -120,6 +134,21 @@
       <button id="startBtn" type="button">Start Exam</button>
     </div>
   </section>
+
+  <!-- CONFIRM INFO (between Start page and Exam) -->
+<section id="confirm">
+  <h2>Confirm Your Details</h2>
+  <p>Please verify your name and email before beginning the exam.</p>
+  <table>
+    <tr><td><strong>Name</strong></td><td id="confirmName">—</td></tr>
+    <tr><td><strong>Email</strong></td><td id="confirmEmail">—</td></tr>
+  </table>
+
+  <div class="btn-row" style="justify-content:space-between; margin-top:16px;">
+    <button type="button" class="btn-light" id="confirmBackBtn">← Edit info</button>
+    <button type="button" id="confirmBeginBtn">Confirm & Begin</button>
+  </div>
+</section>
 
   <!-- EXAM -->
   <section id="exam">
@@ -268,6 +297,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // Grab elements (guard just in case)
   const login = document.getElementById("login");
+  const confirmSec = document.getElementById("confirm");
+const confirmNameEl = document.getElementById("confirmName");
+const confirmEmailEl = document.getElementById("confirmEmail");
+const confirmBackBtn = document.getElementById("confirmBackBtn");
+const confirmBeginBtn = document.getElementById("confirmBeginBtn");
   const exam  = document.getElementById("exam");
   const startBtn = document.getElementById("startBtn");
   const toPartA  = document.getElementById("toPartA");
@@ -355,18 +389,23 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // START button
-  startBtn.addEventListener("click", () => {
-    const name  = (document.getElementById("studentName").value || "").trim();
-    const email = (document.getElementById("studentEmail").value || "").trim();
-    const code  = (document.getElementById("classCode").value || "").trim();
+// START button → show Confirm screen (do NOT start timer yet)
+startBtn.addEventListener("click", () => {
+  const name  = (document.getElementById("studentName").value || "").trim();
+  const email = (document.getElementById("studentEmail").value || "").trim();
+  const code  = (document.getElementById("classCode").value || "").trim();
 
-    if (!name || !email) { alert("Please fill in your details."); return; }
-    if (code !== "MDO2G3") { alert("Invalid class code."); return; }
+  if (!name || !email) { alert("Please fill in your details."); return; }
+  if (code !== "MDO2G3") { alert("Invalid class code."); return; }
 
-    document.getElementById("studentNameField").value = name;
-    document.getElementById("studentEmailField").value = email;
-    document.getElementById("classCodeField").value = code;
+  // Fill the confirm page
+  document.getElementById("confirmName").textContent  = name;
+  document.getElementById("confirmEmail").textContent = email;
+
+  // Swap screens
+  document.getElementById("login").style.display   = "none";
+  document.getElementById("confirm").style.display = "block";
+});
 
     // Show exam
     login.style.display = "none";
@@ -397,6 +436,38 @@ document.addEventListener("DOMContentLoaded", function() {
     submitExam();
   });
 
+  function beginExam() {
+  // Copy (possibly edited) values from the inputs to hidden fields
+  const name  = (document.getElementById("studentName").value || "").trim();
+  const email = (document.getElementById("studentEmail").value || "").trim();
+  const code  = (document.getElementById("classCode").value || "").trim();
+
+  document.getElementById("studentNameField").value  = name;
+  document.getElementById("studentEmailField").value = email;
+  document.getElementById("classCodeField").value    = code;
+
+  // Show exam Part A
+  confirmSec.style.display = "none";
+  exam.style.display  = "block";
+  partA.classList.add("active");
+  partB.classList.remove("active");
+
+  // Kick off anti-cheat & timer & shuffle
+  enableFullScreen();
+  startTimer();
+  randomizeSelectsKeepFirst();
+}
+
+confirmBackBtn.addEventListener("click", () => {
+  // Go back to edit the fields
+  confirmSec.style.display = "none";
+  login.style.display = "block";
+});
+
+confirmBeginBtn.addEventListener("click", () => {
+  beginExam();
+});
+  
   function submitExam() {
     clearInterval(timer);
 
