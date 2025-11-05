@@ -1,209 +1,4 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="google" content="notranslate" />
-<title>Exam Builder – Instructor Portal</title>
-<style>
-  :root { --blue:#004080; --blue2:#0066cc; --bg:#f6f8fb; --card:#ffffff; --border:#d8dee9; }
-  *{box-sizing:border-box}
-  body{font-family:Inter, system-ui, Arial, sans-serif; background:var(--bg); margin:0; color:#1b1f23;}
-  header{background:linear-gradient(135deg,var(--blue),var(--blue2)); color:#fff; padding:28px 18px; text-align:center;}
-  header h1{margin:0; font-weight:800; letter-spacing:.3px}
-  main{max-width:1000px; margin:28px auto; padding:0 16px 40px}
-  .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:22px 20px; box-shadow:0 2px 10px rgba(0,0,0,.04); margin-bottom:18px;}
-  h2{margin:8px 0 12px; color:var(--blue); font-size:20px}
-  label{display:block; font-size:14px; margin-top:10px; color:#0f172a}
-  input[type=text], input[type=number], textarea{width:100%; border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-size:15px; background:#fff;}
-  textarea{min-height:110px; resize:vertical}
-  .row{display:grid; grid-template-columns:1fr 1fr; gap:14px}
-  .small{font-size:12px; color:#6b7280}
-  .btn{background:var(--blue); color:#fff; border:none; padding:12px 18px; border-radius:10px; font-size:16px; cursor:pointer}
-  .btn:hover{background:#003166}
-  table{width:100%; border-collapse:collapse; margin-top:8px}
-  th, td{border:1px solid var(--border); padding:8px; font-size:14px}
-  th{background:#eef2ff; text-align:left}
-  .gate{max-width:440px; margin:60px auto}
-  .err{color:#b00020; font-size:13px; margin-left:10px; display:none}
-</style>
-</head>
-<body>
-<header>
-  <h1>Exam Builder – Instructor Portal</h1>
-</header>
-
-<main>
-  <!-- Password Gate -->
-  <section class="card gate" id="gate">
-    <h2>Instructor Access</h2>
-    <label>Password
-      <input type="password" id="gatePwd" placeholder="Enter password…" />
-    </label>
-    <div style="margin-top:12px">
-      <button class="btn" id="gateBtn">Unlock</button>
-      <span id="gateErr" class="err">Incorrect password.</span>
-    </div>
-  </section>
-
-  <!-- Builder (hidden until unlock) -->
-  <section id="builder" style="display:none">
-    <div class="card">
-      <h2>Step 1 — Exam Info</h2>
-      <div class="row">
-        <label>Exam Title
-          <input type="text" id="examTitle" value="English Exam – Business Resources" />
-        </label>
-        <label>Class Code
-          <input type="text" id="classCode" value="MDO2G3" />
-        </label>
-      </div>
-      <div class="row">
-        <label>Time Limit (minutes)
-          <input type="number" id="timeLimit" min="5" max="180" step="5" value="40" />
-        </label>
-        <label>Email Subject Format
-          <span class="small">Use placeholders: <b>(NAME)</b>, <b>(EXAM)</b>, <b>(CODE)</b></span>
-          <input type="text" id="emailSubject" value="Results – (NAME) – (EXAM) ((CODE))" />
-        </label>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Step 2 — Email Delivery (EmailJS)</h2>
-      <div class="row">
-        <label>Public Key
-          <input type="text" id="emailjsKey" placeholder="e.g., Bb0oPYBiZGQcyIz5r" />
-        </label>
-        <label>Service ID
-          <input type="text" id="emailjsService" placeholder="e.g., service_opm4h6b" />
-        </label>
-      </div>
-      <div class="row">
-        <label>Template ID
-          <input type="text" id="emailjsTemplate" placeholder="e.g., template_r0u784p" />
-        </label>
-        <label>Instructor Email (note)
-          <input type="text" id="instructorEmail" placeholder="Configured in your EmailJS template" />
-        </label>
-      </div>
-      <p class="small">Your EmailJS template must include variables <code>{{subject}}</code> and <code>{{message_html}}</code>.</p>
-    </div>
-
-    <div class="card">
-      <h2>Step 3 — Vocabulary (up to 10 items)</h2>
-      <p class="small">Leave unused rows blank. Each filled row becomes one matching question. Definitions from all filled rows are used as dropdown options for each word.</p>
-      <table>
-        <thead><tr><th>#</th><th>Word</th><th>Correct Definition</th></tr></thead>
-        <tbody id="vocabBody"></tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <h2>Step 4 — Part B Writing Prompt</h2>
-      <label>Prompt Text
-        <textarea id="promptText">You are a team leader. One of your suppliers has delayed an important delivery. Write a short email to your manager. In your email, explain the problem, suggest a solution, and use a polite and professional tone. You must use at least 3 words from the vocabulary list.</textarea>
-      </label>
-    </div>
-
-    <div class="card">
-      <h2>Step 5 — Generate Exam</h2>
-      <button class="btn" id="generateBtn">Generate & Download index.html</button>
-      <p class="small">This downloads a self-contained student exam (Login → Confirm → Exam, timer, fullscreen guard, anti-copy, EmailJS reporting).</p>
-    </div>
-  </section>
-</main>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-
-  /* ========== Gate (Instructor Access) ========== */
-  const BUILDER_PASSWORD = "teacher2025";
-  const gateSection = document.getElementById("gate");
-  const builderSection = document.getElementById("builder");
-  const gateBtn = document.getElementById("gateBtn");
-  const gateErr = document.getElementById("gateErr");
-  const gatePwd = document.getElementById("gatePwd");
-
-  gateBtn.addEventListener("click", function() {
-    const inputVal = gatePwd.value.trim();
-    if (inputVal === BUILDER_PASSWORD) {
-      gateErr.style.display = "none";
-      gateSection.style.display = "none";
-      builderSection.style.display = "block";
-      console.log("✅ Access granted");
-    } else {
-      gateErr.style.display = "inline";
-      console.warn("❌ Wrong password");
-    }
-  });
-  gatePwd.addEventListener("keypress", function(e) { if (e.key === "Enter") gateBtn.click(); });
-
-  /* ========== Blank Vocab Rows (no prefill) ========== */
-  const tbody = document.getElementById("vocabBody");
-  for (let i = 0; i < 10; i++) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${i + 1}</td>
-      <td><input type="text" id="w${i}" value=""></td>
-      <td><input type="text" id="d${i}" value=""></td>`;
-    tbody.appendChild(tr);
-  }
-
-  /* ========== Build Exam HTML and Download ========== */
-  function htmlEscape(s) {
-    return String(s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  function buildExamHTML(cfg) {
-    // Prepare vocabulary arrays from filled rows only
-    const words = [];
-    const defs  = [];
-    cfg.vocab.forEach(v => {
-      const w = (v.word || "").trim();
-      const d = (v.definition || "").trim();
-      if (w && d) { words.push(w); defs.push(d); }
-    });
-
-    const qCount = words.length;
-    if (qCount === 0) {
-      alert("Please add at least one Word + Definition row.");
-      return "";
-    }
-
-    // Build Part A <li> blocks; each select contains all definitions (shuffled at runtime)
-    let partAItemsHTML = "";
-    for (let i = 0; i < qCount; i++) {
-      const word = htmlEscape(words[i]);
-      const options = ['<option value="">-- Choose --</option>']
-        .concat(defs.map(d => `<option>${htmlEscape(d)}</option>`))
-        .join("");
-      partAItemsHTML += `
-        <li>${word}
-          <select name="q${i+1}">
-            ${options}
-          </select>
-        </li>`;
-    }
-
-    // Build correctAnswers object and wordNames array for the exam script
-    const correctMap = {};
-    for (let i = 0; i < qCount; i++) correctMap["q"+(i+1)] = defs[i];
-    const correctAnswersJS = JSON.stringify(correctMap);
-    const wordNamesJS      = JSON.stringify(words);
-
-    const timeLimit = Math.max(5, +cfg.timeLimit || 40); // minutes
-
-    // Email subject with placeholders
-    const subjTemplate = (cfg.subject || "Results – (NAME) – (EXAM) ((CODE))");
-    const subjJS = JSON.stringify(subjTemplate); // keep as string; replaced at runtime with NAME/EXAM/CODE
-
-    // Student exam HTML
-    return `<!DOCTYPE html>
 <html lang="en" translate="no">
 <head>
   <meta charset="UTF-8" />
@@ -211,29 +6,71 @@ document.addEventListener("DOMContentLoaded", function() {
   <meta name="google" content="notranslate">
   <meta http-equiv="Content-Language" content="en">
   <meta name="robots" content="no-translate">
-  <title>${htmlEscape(cfg.title)}</title>
+  <title>English Exam – Business Resources</title>
 
+  <!-- Quill CSS -->
   <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
 
   <style>
     html, body { translate: none !important; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     * { translate: none !important; }
-    body { font-family: Arial, Helvetica, sans-serif; background: #f8f9fb; margin: 0; color: #222; font-size: 16px; line-height: 1.6; }
-    header { background: linear-gradient(135deg, #004080, #0066cc); color: #ffffff; padding: 25px 20px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f8f9fb;
+      margin: 0;
+      color: #222;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, #004080, #0066cc);
+      color: #ffffff;
+      padding: 25px 20px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
     header h1 { margin: 0; font-size: 1.9em; letter-spacing: 0.5px; }
     #timer { text-align: right; font-weight: bold; margin-top: 10px; }
 
-    main { max-width: 900px; margin: 40px auto; background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 0 12px rgba(0,0,0,0.1); }
+    main {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    }
 
-    .card { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); padding: 40px; max-width: 520px; margin: 80px auto; text-align: left; }
+    /* Card styles used by login + confirm */
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      padding: 40px;
+      max-width: 520px;
+      margin: 80px auto;
+      text-align: left;
+    }
     .card h2 { color: #004080; margin-top: 0; text-align: center; }
 
     label { display:block; margin: 12px 0 8px; font-weight: bold; }
-    input[type="text"], input[type="email"], select { width: 100%; padding: 10px; border:1px solid #ccc; border-radius:6px; }
+    input[type="text"], input[type="email"], select {
+      width: 100%; padding: 10px; border:1px solid #ccc; border-radius:6px;
+    }
     textarea { width: 100%; padding: 10px; border:1px solid #ccc; border-radius:6px; }
-    select { white-space: normal; word-wrap: break-word; padding: 8px; }
 
-    button { background:#004080; color:#fff; border:none; padding:12px 28px; border-radius:6px; cursor:pointer; font-size:16px; }
+    select {
+      white-space: normal;
+      word-wrap: break-word;
+      padding: 8px;
+    }
+
+    button {
+      background:#004080; color:#fff; border:none; padding:12px 28px;
+      border-radius:6px; cursor:pointer; font-size:16px;
+    }
     button:hover { background:#003666; }
     .btn-row { display:flex; gap:12px; flex-wrap: wrap; margin-top: 16px; }
     .btn-row.center { justify-content: center; }
@@ -244,13 +81,17 @@ document.addEventListener("DOMContentLoaded", function() {
     ol { padding-left: 20px; }
     ol li { margin-bottom: 14px; }
 
+    /* Sections visibility */
     #exam, #confirm, #partA, #partB { display: none; }
     #partA.active, #partB.active { display: block; }
 
-    .editor-card { border:1px solid #e3e6ee; border-radius:12px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.06); }
+    /* Quill container */
+    .editor-card {
+      border:1px solid #e3e6ee; border-radius:12px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.06);
+    }
     .ql-toolbar.ql-snow { border:none; border-bottom:1px solid #e3e6ee; background:#f9fbff; }
     .ql-container.ql-snow { border:none; min-height: 260px; }
-    .ql-editor { min-height: 240px; }
+    .ql-editor { min-height: 240px; } /* make full box clickable */
 
     .muted { color:#666; font-size: 14px; }
   </style>
@@ -258,7 +99,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 <body>
   <header>
-    <h1>${htmlEscape(cfg.title)} (${htmlEscape(cfg.classCode)})</h1>
+    <h1>English Exam – Business Resources (MDO2G3)</h1>
     <div id="timer"></div>
   </header>
 
@@ -266,7 +107,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <!-- LOGIN -->
     <section id="login" class="card">
       <h2>Start Exam</h2>
-      <p>Enter your details to begin. Once started, you will have <b>${timeLimit}</b> minutes.</p>
+      <p>Enter your details to begin. Once started, you will have <b>40 minutes</b>.</p>
       <label>Name:</label><input type="text" id="studentName" required>
       <label>Email:</label><input type="email" id="studentEmail" required>
       <label>Class Code:</label><input type="text" id="classCode" required>
@@ -298,7 +139,106 @@ document.addEventListener("DOMContentLoaded", function() {
         <div id="partA" class="active">
           <h2>Part A – Vocabulary Matching</h2>
           <ol>
-            ${partAItemsHTML}
+            <li>Budget
+              <select name="q1">
+                <option value="">-- Choose --</option>
+                <option>A plan for how money will be spent during a specific period.</option>
+                <option>The time between ordering and receiving something.</option>
+                <option>The goods and materials a company holds.</option>
+                <option>A company providing goods or services to another.</option>
+                <option>Ongoing expenses not tied to one product or service.</option>
+              </select>
+            </li>
+            <li>Forecast
+              <select name="q2">
+                <option value="">-- Choose --</option>
+                <option>A prediction of future sales, costs, or results.</option>
+                <option>Ongoing expenses not tied to one product or service.</option>
+                <option>Financial gain or loss compared to cost of investment.</option>
+                <option>Number of employees in a company or department.</option>
+                <option>The goods and materials a company holds.</option>
+              </select>
+            </li>
+            <li>KPI
+              <select name="q3">
+                <option value="">-- Choose --</option>
+                <option>A measurable value showing how effectively goals are achieved.</option>
+                <option>A plan for how money will be spent during a specific period.</option>
+                <option>A prediction of future sales, costs, or results.</option>
+                <option>The time between ordering and receiving something.</option>
+                <option>The goods and materials a company holds.</option>
+              </select>
+            </li>
+            <li>Supplier
+              <select name="q4">
+                <option value="">-- Choose --</option>
+                <option>A company providing goods or services to another.</option>
+                <option>Ongoing expenses not tied to one product or service.</option>
+                <option>Managing resources for long-term balance.</option>
+                <option>Financial gain or loss compared to cost of investment.</option>
+                <option>Number of employees in a company or department.</option>
+              </select>
+            </li>
+            <li>Lead Time
+              <select name="q5">
+                <option value="">-- Choose --</option>
+                <option>The time between ordering and receiving something.</option>
+                <option>Extra costs of running a business.</option>
+                <option>Number of employees in a company or department.</option>
+                <option>A business sustainability report.</option>
+                <option>A plan for how money will be spent during a specific period.</option>
+              </select>
+            </li>
+            <li>Inventory
+              <select name="q6">
+                <option value="">-- Choose --</option>
+                <option>The goods and materials a company holds.</option>
+                <option>The expected revenue.</option>
+                <option>The time between orders.</option>
+                <option>Company overhead costs.</option>
+                <option>Financial gain or loss compared to cost of investment.</option>
+              </select>
+            </li>
+            <li>Overhead
+              <select name="q7">
+                <option value="">-- Choose --</option>
+                <option>Ongoing expenses not tied to one product or service.</option>
+                <option>A plan for company goals.</option>
+                <option>The delivery delay period.</option>
+                <option>The total sales revenue.</option>
+                <option>Managing resources for long-term balance.</option>
+              </select>
+            </li>
+            <li>Sustainability
+              <select name="q8">
+                <option value="">-- Choose --</option>
+                <option>Managing resources for long-term balance.</option>
+                <option>The company’s annual sales.</option>
+                <option>A measurable performance indicator.</option>
+                <option>Stock of materials.</option>
+                <option>Number of employees in a company or department.</option>
+              </select>
+            </li>
+            <li>ROI
+              <select name="q9">
+                <option value="">-- Choose --</option>
+                <option>Financial gain or loss compared to cost of investment.</option>
+                <option>Total operating expenses.</option>
+                <option>Employee satisfaction level.</option>
+                <option>Plan for spending.</option>
+                <option>Ongoing expenses not tied to one product or service.</option>
+              </select>
+            </li>
+            <li>Headcount
+              <select name="q10">
+                <option value="">-- Choose --</option>
+                <option>Number of employees in a company or department.</option>
+                <option>Amount of raw materials held.</option>
+                <option>Prediction of future costs.</option>
+                <option>Profit after expenses.</option>
+                <option>The time between ordering and receiving something.</option>
+              </select>
+            </li>
           </ol>
 
           <div class="btn-row right">
@@ -309,7 +249,7 @@ document.addEventListener("DOMContentLoaded", function() {
         <!-- PART B -->
         <div id="partB">
           <h2>Part B – Writing Task</h2>
-          <p class="muted">${htmlEscape(cfg.prompt)}</p>
+          <p class="muted">You are a team leader. One of your suppliers has delayed an important delivery. Write a short email to your manager explaining the problem and suggesting a solution. Use at least <b>3 words from the vocabulary list</b>.</p>
 
           <div class="editor-card">
             <div id="editor"></div>
@@ -324,13 +264,13 @@ document.addEventListener("DOMContentLoaded", function() {
     </section>
   </main>
 
+  <!-- JS at the end (load once) -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
 
   <script>
   document.addEventListener("DOMContentLoaded", function() {
-    // EmailJS init (if key provided)
-    ${cfg.emailjsKey ? `if (window.emailjs) { emailjs.init(${JSON.stringify(cfg.emailjsKey)}); }` : `// No EmailJS key provided; init skipped`}
+    if (window.emailjs) { emailjs.init("Bb0oPYBiZGQcyIz5r"); }
 
     // Elements
     const login  = document.getElementById("login");
@@ -352,14 +292,32 @@ document.addEventListener("DOMContentLoaded", function() {
     const timerDisplay = document.getElementById("timer");
     const form = document.getElementById("examForm");
 
+    // Guard: if any required node missing, stop and log
+    const required = [login, confirmSec, exam, startBtn, confirmBackBtn, confirmBeginBtn, confirmName, confirmEmail, partA, partB, toPartA, toPartB, timerDisplay, form];
+    if (required.some(n => !n)) {
+      console.error("Missing required DOM nodes. Check IDs.", {login, confirmSec, exam, startBtn, confirmBackBtn, confirmBeginBtn, confirmName, confirmEmail, partA, partB, toPartA, toPartB, timerDisplay, form});
+      return;
+    }
+
     // Timer
-    let timeLeft = ${timeLimit} * 60;
+    let timeLeft = 40 * 60;
     let timer;
 
-    // Correct answers and word list (from builder)
-    const correctAnswers = ${correctAnswersJS};
-    const wordNames = ${wordNamesJS};
-    const totalQs = wordNames.length;
+    // Correct answers (10)
+    const correctAnswers = {
+      q1:"A plan for how money will be spent during a specific period.",
+      q2:"A prediction of future sales, costs, or results.",
+      q3:"A measurable value showing how effectively goals are achieved.",
+      q4:"A company providing goods or services to another.",
+      q5:"The time between ordering and receiving something.",
+      q6:"The goods and materials a company holds.",
+      q7:"Ongoing expenses not tied to one product or service.",
+      q8:"Managing resources for long-term balance.",
+      q9:"Financial gain or loss compared to cost of investment.",
+      q10:"Number of employees in a company or department."
+    };
+
+    const wordNames = ["Budget","Forecast","KPI","Supplier","Lead Time","Inventory","Overhead","Sustainability","ROI","Headcount"];
 
     // Lazy Quill
     let quill = null;
@@ -382,7 +340,7 @@ document.addEventListener("DOMContentLoaded", function() {
       timer = setInterval(() => {
         timeLeft--;
         const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
-        timerDisplay.textContent = \`Time Remaining: \${m}:\${s.toString().padStart(2,"0")}\`;
+        timerDisplay.textContent = `Time Remaining: ${m}:${s.toString().padStart(2,"0")}`;
         if (timeLeft <= 0) { clearInterval(timer); submitExam(); }
       }, 1000);
     }
@@ -402,7 +360,7 @@ document.addEventListener("DOMContentLoaded", function() {
     function randomizeSelectsKeepFirst() {
       document.querySelectorAll("#partA select").forEach(sel => {
         const opts = Array.from(sel.options);
-        const first = opts.shift(); // "-- Choose --"
+        const first = opts.shift(); // remove first
         for (let i = opts.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [opts[i].text, opts[j].text] = [opts[j].text, opts[i].text];
@@ -421,17 +379,19 @@ document.addEventListener("DOMContentLoaded", function() {
       const code  = (document.getElementById("classCode").value || "").trim();
 
       if (!name || !email) { alert("Please fill in your details."); return; }
-      if (code !== ${JSON.stringify(cfg.classCode)}) { alert("Invalid class code."); return; }
+      if (code !== "MDO2G3") { alert("Invalid class code."); return; }
 
       confirmName.textContent  = name;
       confirmEmail.textContent = email;
 
+      // Move to Confirm page
       login.style.display = "none";
       confirmSec.style.display = "block";
     });
 
     // ----- Confirm page buttons -----
     function beginExam() {
+      // Copy confirmed inputs into hidden fields
       const name  = (document.getElementById("studentName").value || "").trim();
       const email = (document.getElementById("studentEmail").value || "").trim();
       const code  = (document.getElementById("classCode").value || "").trim();
@@ -440,11 +400,13 @@ document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("studentEmailField").value = email;
       document.getElementById("classCodeField").value    = code;
 
+      // Show Part A
       confirmSec.style.display = "none";
       exam.style.display  = "block";
       partA.classList.add("active");
       partB.classList.remove("active");
 
+      // Anti-cheat & timer & shuffle
       enableFullScreen();
       startTimer();
       randomizeSelectsKeepFirst();
@@ -482,9 +444,11 @@ document.addEventListener("DOMContentLoaded", function() {
       const fd = new FormData(form);
       const name  = fd.get("studentName")  || document.getElementById("studentNameField").value;
       const email = fd.get("studentEmail") || document.getElementById("studentEmailField").value;
-      const minutesUsed = ${timeLimit} - Math.floor(timeLeft / 60);
+      const minutesUsed = 40 - Math.floor(timeLeft / 60);
 
       const emailHtml = quill ? quill.root.innerHTML.trim() : "<em>(No response)</em>";
+
+      const totalQs = document.querySelectorAll('#partA select[name^="q"]').length || 10;
 
       let scoreA = 0;
       let partARowsHTML = "";
@@ -493,25 +457,26 @@ document.addEventListener("DOMContentLoaded", function() {
         const corr = correctAnswers["q" + i] || "";
         const ok   = sel === corr;
         if (ok) scoreA++;
-        const mark = ok ? "✅ Correct" : \`❌ Incorrect → Correct answer: \${corr}\`;
-        partARowsHTML += \`
+        const mark = ok ? "✅ Correct" : `❌ Incorrect → Correct answer: ${corr}`;
+        partARowsHTML += `
           <tr>
-            <td style="padding:8px;border:1px solid #ccc;">\${wordNames[i-1] || ("Q"+i)}</td>
-            <td style="padding:8px;border:1px solid #ccc;">\${sel}</td>
-            <td style="padding:8px;border:1px solid #ccc;color:\${ok ? 'green' : '#b00'};">\${mark}</td>
-          </tr>\`;
+            <td style="padding:8px;border:1px solid #ccc;">${wordNames[i-1] || ("Q"+i)}</td>
+            <td style="padding:8px;border:1px solid #ccc;">${sel}</td>
+            <td style="padding:8px;border:1px solid #ccc;color:${ok ? 'green' : '#b00'};">${mark}</td>
+          </tr>`;
       }
 
       const partBScore = "___ / 10";
       const finalNote  = "___ / 20";
 
-      const htmlReport = \`
-        <h2 style="color:#004080;margin:0 0 8px 0;">Results – ${htmlEscape(cfg.title)} – \${name} (${htmlEscape(cfg.classCode)})</h2>
+      // Report with “Results” and 3 sections
+      const htmlReport = `
+        <h2 style="color:#004080;margin:0 0 8px 0;">Results – English Exam – Business Resources – ${name} (MDO2G3)</h2>
         <table style="border-collapse:collapse;width:100%;max-width:640px;font-size:14px;margin:0 0 12px 0;">
-          <tr><td style="padding:4px 0;"><b>Student Name:</b> \${name}</td></tr>
-          <tr><td style="padding:4px 0;"><b>Student Email:</b> \${email}</td></tr>
-          <tr><td style="padding:4px 0;"><b>Class Code:</b> ${htmlEscape(cfg.classCode)}</td></tr>
-          <tr><td style="padding:4px 0;"><b>Time Taken:</b> \${minutesUsed} min</td></tr>
+          <tr><td style="padding:4px 0;"><b>Student Name:</b> ${name}</td></tr>
+          <tr><td style="padding:4px 0;"><b>Student Email:</b> ${email}</td></tr>
+          <tr><td style="padding:4px 0;"><b>Class Code:</b> MDO2G3</td></tr>
+          <tr><td style="padding:4px 0;"><b>Time Taken:</b> ${minutesUsed} min</td></tr>
         </table>
         <hr style="border:none;border-top:1px solid #ddd;margin:14px 0;">
 
@@ -524,14 +489,18 @@ document.addEventListener("DOMContentLoaded", function() {
               <th style="padding:8px;border:1px solid #ccc;">Result</th>
             </tr>
           </thead>
-          <tbody>\${partARowsHTML}</tbody>
+          <tbody>
+            ${partARowsHTML}
+          </tbody>
         </table>
-        <p style="margin:10px 0 0 0;"><b>Part A Score:</b> \${scoreA} / \${totalQs}</p>
+        <p style="margin:10px 0 0 0;"><b>Part A Score:</b> ${scoreA} / ${totalQs}</p>
 
         <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
 
         <h3 style="color:#004080;margin:10px 0 8px 0;">Part B – Written Exercise</h3>
-        <div style="border:1px solid #ccc;border-radius:6px;padding:10px;background:#f9f9f9;">\${emailHtml}</div>
+        <div style="border:1px solid #ccc;border-radius:6px;padding:10px;background:#f9f9f9;">
+          ${emailHtml}
+        </div>
 
         <table style="border-collapse:collapse;width:100%;font-size:15px;margin-top:6px;">
           <thead>
@@ -548,31 +517,35 @@ document.addEventListener("DOMContentLoaded", function() {
             <tr><td style="padding:8px;border:1px solid #ccc;">Professional Style</td><td style="padding:8px;border:1px solid #ccc;">/2</td><td style="padding:8px;border:1px solid #ccc;">___ / 2</td></tr>
           </tbody>
         </table>
-        <p style="margin:10px 0 0 0;"><b>Part B Score:</b> \${partBScore}</p>
+        <p style="margin:10px 0 0 0;"><b>Part B Score:</b> ${partBScore}</p>
 
         <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
 
         <h3 style="color:#004080;margin:10px 0 8px 0;">Part 3 – Final Score</h3>
         <table style="border-collapse:collapse;width:100%;max-width:460px;font-size:15px;">
-          <tr><td style="padding:8px;border:1px solid #ccc;">Part A Score</td><td style="padding:8px;border:1px solid #ccc;">\${scoreA} / \${totalQs}</td></tr>
-          <tr><td style="padding:8px;border:1px solid #ccc;">Part B Score</td><td style="padding:8px;border:1px solid #ccc;">\${partBScore}</td></tr>
-          <tr><td style="padding:8px;border:1px solid #ccc;"><b>Final Note</b></td><td style="padding:8px;border:1px solid #ccc;"><b>\${finalNote}</b></td></tr>
+          <tr>
+            <td style="padding:8px;border:1px solid #ccc;">Part A Score</td>
+            <td style="padding:8px;border:1px solid #ccc;">${scoreA} / ${totalQs}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px;border:1px solid #ccc;">Part B Score</td>
+            <td style="padding:8px;border:1px solid #ccc;">${partBScore}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px;border:1px solid #ccc;"><b>Final Note</b></td>
+            <td style="padding:8px;border:1px solid #ccc;"><b>${finalNote}</b></td>
+          </tr>
         </table>
 
         <div style="border-top:1px solid #ccc;margin-top:16px;padding-top:8px;font-size:12px;color:#555;">
-          <em>This report was generated automatically for ${htmlEscape(cfg.title)}.</em>
+          <em>This report was generated automatically for the English Exam – Business Resources.</em>
         </div>
-      \`;
+      `;
 
-      // Subject with placeholders
-      const subjectTemplate = ${subjJS};
-      const subject = subjectTemplate
-        .replace("(NAME)", name)
-        .replace("(EXAM)", ${JSON.stringify(cfg.title)})
-        .replace("(CODE)", ${JSON.stringify(cfg.classCode)});
+      const subject = `Results – ${name} – English Exam – Business Resources (MDO2G3)`;
 
       if (window.emailjs) {
-        emailjs.send(${JSON.stringify(cfg.emailjsService)}, ${JSON.stringify(cfg.emailjsTemplate)}, {
+        emailjs.send("service_opm4h6b", "template_r0u784p", {
           from_name: name,
           from_email: email,
           subject,
@@ -592,62 +565,5 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
   </script>
-</body>
-</html>`;
-  }
-
-  /* ========== Generate & Auto-Download ========== */
-  document.getElementById("generateBtn").addEventListener("click", () => {
-    const title = (document.getElementById("examTitle").value || "English Exam").trim();
-    const classCode = (document.getElementById("classCode").value || "CLASS").trim();
-    const timeLimit = Math.max(5, +document.getElementById("timeLimit").value || 40);
-    const emailSub = (document.getElementById("emailSubject").value || "Results – (NAME) – (EXAM) ((CODE))").trim();
-    const emailjsKey = document.getElementById("emailjsKey").value.trim();
-    const emailjsService = document.getElementById("emailjsService").value.trim();
-    const emailjsTemplate = document.getElementById("emailjsTemplate").value.trim();
-
-    // Collect only filled vocab rows
-    const vocab = [];
-    for (let i = 0; i < 10; i++) {
-      const w = (document.getElementById("w" + i).value || "").trim();
-      const d = (document.getElementById("d" + i).value || "").trim();
-      if (w && d) vocab.push({ word: w, definition: d });
-    }
-    if (vocab.length === 0) {
-      alert("Please add at least one Word + Definition row in Vocabulary.");
-      return;
-    }
-
-    const prompt = (document.getElementById("promptText").value || "").trim();
-    if (!prompt) {
-      alert("Please enter a Part B prompt.");
-      return;
-    }
-
-    const html = buildExamHTML({
-      title,
-      classCode,
-      timeLimit,
-      subject: emailSub,
-      emailjsKey,
-      emailjsService,
-      emailjsTemplate,
-      vocab,
-      prompt,
-    });
-    if (!html) return;
-
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "English_Exam_" + classCode + ".html";
-    document.body.appendChild(a);
-    a.click();
-    URL.revokeObjectURL(a.href);
-    a.remove();
-  });
-
-});
-</script>
 </body>
 </html>
